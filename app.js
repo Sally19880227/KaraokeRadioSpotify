@@ -42,6 +42,8 @@ const el = {
   searchHistoryClear: document.getElementById('search-history-clear'),
 
   resultsView: document.getElementById('results-view'),
+  historyThumbSection: document.getElementById('history-thumb-section'),
+  historyThumbGrid: document.getElementById('history-thumb-grid'),
   resultsHeading: document.getElementById('results-heading'),
   resultsList: document.getElementById('results-list'),
   statusMsg: document.getElementById('status-msg'),
@@ -94,6 +96,9 @@ el.apiKeySave.addEventListener('click', () => {
     localStorage.setItem('kr_api_key', key);
   }
   closeSettings();
+  if(state.apiKey && el.historyThumbGrid && !el.historyThumbGrid.children.length){
+    renderHistoryThumbnailGrid();
+  }
 });
 
 // ---------- 検索履歴 ----------
@@ -139,6 +144,8 @@ el.searchForm.addEventListener('submit', (e) => {
   const q = el.searchInput.value.trim();
   if(!q) return;
   showResultsView();
+  el.historyThumbSection.classList.add('hidden');
+  el.resultsHeading.classList.remove('hidden');
   state.query = q;
   state.nextPageToken = null;
   saveSearchHistory(q);
@@ -231,6 +238,53 @@ function buildResultCard(v){
   card.addEventListener('click', play);
   card.addEventListener('keydown', e => { if(e.key === 'Enter') play(); });
   return card;
+}
+
+// サムネイルのみを敷き詰めるタイルを作る（初期画面の「過去の検索から」用）
+function buildThumbTile(v){
+  const tile = document.createElement('div');
+  tile.className = 'thumb-tile';
+  tile.tabIndex = 0;
+  tile.innerHTML = `
+    <img src="${v.thumb}" alt="" loading="lazy">
+    <div class="thumb-tile-title">${decodeHTML(v.title)}</div>
+  `;
+  const play = () => startKaraoke(v);
+  tile.addEventListener('click', play);
+  tile.addEventListener('keydown', e => { if(e.key === 'Enter') play(); });
+  return tile;
+}
+
+// 初期画面に、過去の検索履歴からランダムに選んだ曲のサムネイルを敷き詰めて表示する
+async function renderHistoryThumbnailGrid(){
+  const history = getSearchHistory();
+  if(!history.length || !state.apiKey) return;
+
+  el.historyThumbSection.classList.remove('hidden');
+  el.resultsHeading.classList.add('hidden');
+  el.historyThumbGrid.innerHTML = '';
+  showStatus('過去の検索から曲を読み込み中…');
+
+  const picks = shuffleArray(history).slice(0, Math.min(6, history.length));
+  const seen = new Set();
+  const allTracks = [];
+
+  for(const q of picks){
+    const data = await ytFetch('search', {
+      part: 'snippet', q, type: 'video', videoCategoryId: '10', maxResults: 6,
+    });
+    if(!data) continue;
+    normalizeSearchResponse(data).forEach(v => {
+      if(!seen.has(v.id)){
+        seen.add(v.id);
+        allTracks.push(v);
+      }
+    });
+  }
+
+  showStatus('');
+  if(!allTracks.length) return;
+  shuffleArray(allTracks).forEach(v => el.historyThumbGrid.appendChild(buildThumbTile(v)));
 }
 
 // ---------- 画面切り替え ----------
@@ -835,6 +889,27 @@ const TECHNIQUE_ICONS = {
   vibrato:  { symbol: '〰', color: '#7be07b' }, // ビブラート
 };
 
+// 派手なレインボーのキラキラ（星）のクラスターを1つ作る
+const SPARKLE_COLORS = ['#ff5e6c', '#ff9f4d', '#ffe066', '#8cff8c', '#5ecbff', '#8c9dff', '#d68cff', '#ffffff'];
+const SPARKLE_GLYPHS = ['✦', '✧', '⋆', '✶'];
+function buildSparkleCluster(){
+  const cluster = document.createElement('span');
+  cluster.className = 'pitch-sparkle-cluster';
+  const starCount = 5 + Math.floor(Math.random() * 4); // 5〜8個
+  for(let s = 0; s < starCount; s++){
+    const star = document.createElement('i');
+    star.textContent = SPARKLE_GLYPHS[Math.floor(Math.random() * SPARKLE_GLYPHS.length)];
+    star.style.color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+    star.style.left = `${Math.round(Math.random() * 40 - 4)}px`;
+    star.style.top = `${Math.round(Math.random() * 30 - 14)}px`;
+    star.style.fontSize = `${10 + Math.round(Math.random() * 8)}px`;
+    star.style.animationDelay = `${(Math.random() * 1.6).toFixed(2)}s`;
+    star.style.animationDuration = `${(1.1 + Math.random() * 1.1).toFixed(2)}s`;
+    cluster.appendChild(star);
+  }
+  return cluster;
+}
+
 // 演出用の「音程バー」の見た目をランダムに生成する（実際の音程データではない）
 function regeneratePitchTrack(bumpedKey){
   if(!el.pitchTrackBase || !el.pitchTrackColor) return;
@@ -859,12 +934,11 @@ function regeneratePitchTrack(bumpedKey){
     iconPositions.set(idx, key);
   }
 
-  // レインボーのキラキラを付与する箇所を、ところどころに複数決める
+  // レインボーのキラキラを付与する箇所を、ところどころに複数決める（かなり多め・派手に）
   const sparklePositions = new Set();
-  const sparkleCount = 3 + Math.floor(Math.random() * 4); // 3〜6箇所
-  for(let n = 0; n < sparkleCount; n++){
-    const idx = Math.floor(Math.random() * pillCount);
-    if(!gapPositions.has(idx)) sparklePositions.add(idx);
+  const sparkleRatio = 0.5 + Math.random() * 0.25; // ブロックの50〜75%程度に付与
+  for(let i = 0; i < pillCount; i++){
+    if(!gapPositions.has(i) && Math.random() < sparkleRatio) sparklePositions.add(i);
   }
 
   // 階段状の高さレベルを作る：同じ高さがしばらく続き（直線区間）、時々上下にジャンプする
@@ -911,12 +985,9 @@ function regeneratePitchTrack(bumpedKey){
       colorPill.appendChild(icon);
     }
 
-    // レインボーのキラキラも同様に、通過済みブロックにのみ付与する
+    // レインボーのキラキラも同様に、通過済みブロックにのみ付与する（多め・派手に）
     if(!isGap && sparklePositions.has(i)){
-      const cluster = document.createElement('span');
-      cluster.className = 'pitch-sparkle-cluster';
-      cluster.innerHTML = '<i>✦</i><i>✧</i><i>✦</i>';
-      colorPill.appendChild(cluster);
+      colorPill.appendChild(buildSparkleCluster());
     }
 
     el.pitchTrackBase.appendChild(basePill);
@@ -1015,4 +1086,6 @@ renderSearchHistory();
 if(!state.apiKey){
   showStatus('はじめに右上の ⚙ からYouTube Data APIキーを設定してください。');
   openSettings();
+} else {
+  renderHistoryThumbnailGrid();
 }
