@@ -55,6 +55,11 @@
         <button id="karaoke-offset-plus" class="offset-step-btn" aria-label="0.2秒遅らせる">+0.2</button>
         <span id="karaoke-offset-value">0.0秒</span>
       </div>
+      <div class="karaoke-offset karaoke-rate">
+        <label for="karaoke-rate-slider">速度補正</label>
+        <input type="range" id="karaoke-rate-slider" min="0.90" max="1.10" value="1.00" step="0.005">
+        <span id="karaoke-rate-value">100%</span>
+      </div>
       <button id="back-to-search-btn" class="karaoke-close-btn">🔍 検索に戻る</button>
     </div>
 
@@ -69,7 +74,8 @@
     <div class="control-bar">
       <button id="play-pause-btn" class="control-btn" aria-label="再生/一時停止">⏸</button>
       <button id="skip-btn" class="control-btn control-btn-secondary" aria-label="次の曲へ">⏭</button>
-      <div class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
+      <button id="sync-tap-btn" class="control-btn-secondary sync-tap-btn">🎯 今タップで同期</button>
+      <div id="sync-hint" class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
     </div>
   </section>
 
