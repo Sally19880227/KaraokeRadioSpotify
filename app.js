@@ -597,6 +597,26 @@ function renderKaraokeWindow(idx){
   positions.forEach(p => {
     const i = idx + p.offset;
     const line = state.lyrics[i];
+
+    if(p.cls === 'k-current'){
+      const wrap = document.createElement('div');
+      wrap.className = 'k-current-wrap';
+      const div = document.createElement('div');
+      div.className = `k-line ${p.cls}`;
+      div.textContent = line ? line.text : '\u00A0';
+      if(line) div.addEventListener('click', () => resyncToLine(i));
+      wrap.appendChild(div);
+
+      if(line){
+        const sparkles = document.createElement('div');
+        sparkles.className = 'k-sparkles';
+        sparkles.innerHTML = '<span>✦</span>'.repeat(8);
+        wrap.appendChild(sparkles);
+      }
+      el.karaokeLines.appendChild(wrap);
+      return;
+    }
+
     const div = document.createElement('div');
     div.className = `k-line ${p.cls}`;
     div.textContent = line ? line.text : '\u00A0';
