@@ -24,6 +24,8 @@ const state = {
   calibrationTaps: [],
   bgTimer: null,
   bgActiveLayer: 'a',
+  pitchStats: { shakuri: 0, kobushi: 0, fall: 0, vibrato: 0 },
+  currentSegment: -1,
 };
 
 const el = {
@@ -50,6 +52,13 @@ const el = {
   karaokeArtist: document.getElementById('karaoke-artist'),
   karaokeStatus: document.getElementById('karaoke-status'),
   karaokeLines: document.getElementById('karaoke-lines'),
+  pitchTrack: document.getElementById('pitch-track'),
+  pitchCursor: document.getElementById('pitch-cursor'),
+  statShakuri: document.getElementById('stat-shakuri'),
+  statKobushi: document.getElementById('stat-kobushi'),
+  statFall: document.getElementById('stat-fall'),
+  statVibrato: document.getElementById('stat-vibrato'),
+  pitchSegments: document.getElementById('pitch-segments'),
   karaokeOffsetSlider: document.getElementById('karaoke-offset-slider'),
   karaokeRateSlider: document.getElementById('karaoke-rate-slider'),
   karaokeRateValue: document.getElementById('karaoke-rate-value'),
@@ -540,6 +549,16 @@ async function loadKaraokeLyrics(v){
   el.karaokeLines.innerHTML = '';
   el.karaokeStatus.textContent = '歌詞を検索中…';
 
+  state.pitchStats = { shakuri: 0, kobushi: 0, fall: 0, vibrato: 0 };
+  state.currentSegment = -1;
+  el.statShakuri.textContent = '0';
+  el.statKobushi.textContent = '0';
+  el.statFall.textContent = '0';
+  el.statVibrato.textContent = '0';
+  if(el.pitchSegments) el.pitchSegments.querySelectorAll('.seg').forEach(s => s.classList.remove('is-current'));
+  if(el.pitchTrack) el.pitchTrack.innerHTML = '';
+  if(el.pitchCursor){ el.pitchCursor.style.transition = 'none'; el.pitchCursor.style.left = '0%'; }
+
   const result = await findLyricsWithFallback(v);
   if(!result.lrc){
     el.karaokeStatus.textContent = `歌詞が見つかりませんでした（検索語: ${result.usedArtist} / ${result.usedTrack}）。「✎ 歌詞を編集」から手動で貼り付けることもできます。`;
@@ -574,6 +593,7 @@ function stopKaraokeSyncLoop(){
 }
 function karaokeTick(){
   if(!state.player || !state.player.getCurrentTime || !state.lyrics.length) return;
+  updatePitchSegment();
   const t = (state.player.getCurrentTime() * state.karaokeRate) - state.karaokeOffset;
   let idx = -1;
   for(let i = 0; i < state.lyrics.length; i++){
@@ -612,6 +632,11 @@ function renderKaraokeWindow(idx){
         sparkles.className = 'k-sparkles';
         sparkles.innerHTML = '<span>✦</span>'.repeat(8);
         wrap.appendChild(sparkles);
+
+        const shockLines = document.createElement('div');
+        shockLines.className = 'k-shock-lines';
+        shockLines.innerHTML = '<span></span>'.repeat(6);
+        wrap.appendChild(shockLines);
       }
       el.karaokeLines.appendChild(wrap);
       return;
@@ -693,6 +718,7 @@ function applyRateAndOffset(rate, offset){
 // 現在の行から次の行までの時間に合わせて、文字が色付いていくアニメーションの速さを設定する
 function applyKaraokeFillAnimation(idx){
   const currentEl = el.karaokeLines.querySelector('.k-current');
+  const wrapEl = el.karaokeLines.querySelector('.k-current-wrap');
   if(!currentEl || idx < 0){
     if(currentEl) currentEl.style.animation = 'none';
     return;
@@ -706,6 +732,76 @@ function applyKaraokeFillAnimation(idx){
   // 強制的にリフローさせてアニメーションを最初から再生させる
   void currentEl.offsetWidth;
   currentEl.style.animation = `karaokeFill ${duration}s linear forwards`;
+
+  // 行の間隔が短い（テンポが速い＝曲が盛り上がっている）ほど、ビリビリ線を激しく速く動かす
+  if(wrapEl){
+    const intensity = 1 - (duration - 1.2) / (8 - 1.2); // 0（穏やか）〜1（激しい）
+    const shockSpeed = (0.7 - intensity * 0.5).toFixed(2); // 0.2s（激しい）〜0.7s（穏やか）
+    const shockOpacity = (0.35 + intensity * 0.55).toFixed(2);
+    wrapEl.style.setProperty('--shock-speed', `${shockSpeed}s`);
+    wrapEl.style.setProperty('--shock-opacity', shockOpacity);
+    wrapEl.classList.toggle('is-intense', intensity > 0.55);
+  }
+
+  // 音程バー（演出用）：行が変わるたびに左端からやり直し、その行が終わるタイミングで右端まで進む
+  regeneratePitchTrack();
+  movePitchCursor(duration);
+  bumpPitchStats();
+}
+
+// 演出用の「音程バー」の見た目をランダムに生成する（実際の音程データではない）
+function regeneratePitchTrack(){
+  if(!el.pitchTrack) return;
+  el.pitchTrack.innerHTML = '';
+  const colors = ['', 'c-green', 'c-pink', 'c-blue'];
+  const pillCount = 16 + Math.floor(Math.random() * 8);
+  let y = 50; // 中央からスタートし、なめらかに上下させる
+  for(let i = 0; i < pillCount; i++){
+    y += (Math.random() - 0.5) * 36;
+    y = Math.min(88, Math.max(12, y));
+    const pill = document.createElement('div');
+    const width = 14 + Math.random() * 22;
+    const color = Math.random() < 0.75 ? '' : colors[Math.floor(Math.random() * colors.length)];
+    pill.className = `pitch-pill ${color}`;
+    pill.style.width = `${width}px`;
+    pill.style.marginTop = `${y * 0.5}px`;
+    el.pitchTrack.appendChild(pill);
+  }
+}
+
+// 音程バーのカーソルを左端から右端まで、行の長さに合わせて動かす
+function movePitchCursor(duration){
+  if(!el.pitchCursor) return;
+  el.pitchCursor.style.transition = 'none';
+  el.pitchCursor.style.left = '0%';
+  void el.pitchCursor.offsetWidth; // 強制リフロー
+  el.pitchCursor.style.transition = `left ${duration}s linear`;
+  el.pitchCursor.style.left = '100%';
+}
+
+// しゃくり・こぶし・フォール・ビブラートのカウンターを、行が変わるたびに演出としてランダムに増やす
+function bumpPitchStats(){
+  const keys = ['shakuri', 'kobushi', 'fall', 'vibrato'];
+  const key = keys[Math.floor(Math.random() * keys.length)];
+  if(Math.random() < 0.6){
+    state.pitchStats[key]++;
+    const elMap = { shakuri: el.statShakuri, kobushi: el.statKobushi, fall: el.statFall, vibrato: el.statVibrato };
+    elMap[key].textContent = state.pitchStats[key];
+  }
+}
+
+// 曲全体の再生位置から「演奏区間」（1〜6）をハイライトする（演出用）
+function updatePitchSegment(){
+  if(!el.pitchSegments || !state.player || !state.player.getDuration) return;
+  const total = state.player.getDuration();
+  if(!total) return;
+  const t = state.player.getCurrentTime();
+  const seg = Math.min(5, Math.floor((t / total) * 6));
+  if(seg === state.currentSegment) return;
+  state.currentSegment = seg;
+  el.pitchSegments.querySelectorAll('.seg').forEach(s => {
+    s.classList.toggle('is-current', parseInt(s.dataset.n, 10) === seg + 1);
+  });
 }
 
 // ---------- 歌詞の手動編集 ----------
