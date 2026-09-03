@@ -205,29 +205,28 @@ button{ font-family:inherit; cursor:pointer; }
 /* ---------- 音程バー風の演出（実際の採点・音程判定ではない演出用UI） ---------- */
 .pitch-bar-wrap{
   width:100%; max-width:none;
-  margin: 0 -20px 22px; /* karaoke-bodyの左右paddingぶんを打ち消し、画面端まで広げる */
-  padding: 0 10px;
+  padding: 0 10px 10px;
 }
 .pitch-bar{
-  position:relative; height:76px; width:100%; margin-top:22px;
+  position:relative; height:92px; width:100%;
   background: rgba(20,20,28,0.55); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   overflow:visible;
 }
-.pitch-bar::before, .pitch-bar::after{ content:''; } /* 予約 */
 .pitch-track{
-  position:absolute; inset:0; display:flex; align-items:center; gap:0; padding: 0 10px; overflow:visible;
+  position:absolute; inset:0; display:flex; align-items:flex-start; gap:2px; padding: 8px 10px; overflow:visible;
 }
 .pitch-pill{
-  height:12px; flex-shrink:0;
+  height:14px; flex:1 1 auto; min-width:6px;
   background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #f2a900);
   border-top:1px solid rgba(255,255,255,0.8);
   box-shadow: 0 0 6px rgba(255,209,102,0.6);
   position:relative;
+  transition: margin-top .15s ease;
 }
 .pitch-pill.c-green{ background: linear-gradient(180deg, #ecffe0, #7be07b 55%, #2fae4f); box-shadow:0 0 6px rgba(140,255,140,.6); }
 .pitch-pill.c-pink{ background: linear-gradient(180deg, #ffe6f5, #ff8cd0 55%, #e0459c); box-shadow:0 0 6px rgba(255,140,200,.6); }
 .pitch-pill.c-blue{ background: linear-gradient(180deg, #e2f4ff, #6fc4ff 55%, #2a8fe0); box-shadow:0 0 6px rgba(140,190,255,.6); }
-.pitch-pill.is-gap{ background: transparent; box-shadow:none; }
+.pitch-pill.is-gap{ background: transparent; box-shadow:none; border-top:none; }
 
 /* 通り過ぎた後に残る、虹色のキラキラの軌跡 */
 .pitch-trail{
@@ -235,7 +234,7 @@ button{ font-family:inherit; cursor:pointer; }
   background: linear-gradient(90deg,
     rgba(255,94,108,.32), rgba(255,178,71,.32), rgba(255,224,102,.32), rgba(140,255,140,.32),
     rgba(94,203,255,.32), rgba(140,157,255,.32), rgba(214,140,255,.32));
-  overflow:hidden; pointer-events:none;
+  overflow:hidden; pointer-events:none; z-index:0;
 }
 .pitch-trail::after{
   content:''; position:absolute; inset:0;
@@ -250,7 +249,7 @@ button{ font-family:inherit; cursor:pointer; }
 @keyframes trailTwinkle{ 0%,100%{ opacity:.2; } 50%{ opacity:.65; } }
 
 .pitch-cursor{
-  position:absolute; top:-6px; bottom:-6px; left:0;
+  position:absolute; top:0; bottom:0; left:0;
   width:2px; background: #fff; box-shadow: 0 0 8px #fff;
   z-index:3;
 }
