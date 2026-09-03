@@ -189,38 +189,84 @@ button{ font-family:inherit; cursor:pointer; }
   text-align:center; padding: 24px 20px; position:relative; z-index:1;
 }
 .karaoke-status{ font-size:13.5px; color: var(--text-dim); margin-bottom:18px; }
+
+.lyric-candidates{ max-width: 640px; margin: 0 auto 8px; }
+.lyric-candidates-label{ font-size:12px; color: var(--text-dim); margin-bottom:10px; }
+.lyric-candidates-chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.lyric-candidate-chip{
+  background: var(--surface); border:1px solid var(--line); color: var(--text);
+  font-size:12.5px; padding:7px 14px; border-radius:999px;
+  max-width: 280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.lyric-candidate-chip:hover{ border-color: var(--accent); color: var(--accent); }
+.lyric-candidate-chip:disabled{ opacity:.6; cursor:default; }
 .karaoke-tap-hint{ font-size:12px; color: var(--text-dim); margin-top:22px; opacity:.75; }
 
 /* ---------- 音程バー風の演出（実際の採点・音程判定ではない演出用UI） ---------- */
 .pitch-bar-wrap{
-  width:100%; max-width: 900px; margin: 0 auto 22px;
+  width:100%; max-width:none;
+  margin: 0 -20px 22px; /* karaoke-bodyの左右paddingぶんを打ち消し、画面端まで広げる */
+  padding: 0 10px;
 }
 .pitch-bar{
-  position:relative; height:76px; width:100%;
-  background: rgba(20,20,28,0.55); border:1px solid var(--line); border-radius:10px;
-  overflow:hidden; backdrop-filter: blur(4px);
+  position:relative; height:76px; width:100%; margin-top:22px;
+  background: rgba(20,20,28,0.55); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  overflow:visible;
 }
+.pitch-bar::before, .pitch-bar::after{ content:''; } /* 予約 */
 .pitch-track{
-  position:absolute; inset:0; display:flex; align-items:center; gap:3px; padding: 0 10px;
+  position:absolute; inset:0; display:flex; align-items:center; gap:0; padding: 0 10px; overflow:visible;
 }
 .pitch-pill{
-  height:10px; border-radius:999px; flex-shrink:0;
-  background: linear-gradient(90deg, #ffe066, #ffb347);
-  box-shadow: 0 0 6px rgba(255,209,102,0.5);
+  height:12px; flex-shrink:0;
+  background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #f2a900);
+  border-top:1px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 6px rgba(255,209,102,0.6);
+  position:relative;
 }
-.pitch-pill.c-green{ background: linear-gradient(90deg, #8cff8c, #4dd97a); box-shadow:0 0 6px rgba(140,255,140,.5); }
-.pitch-pill.c-pink{ background: linear-gradient(90deg, #ff9fd6, #ff5ea8); box-shadow:0 0 6px rgba(255,140,200,.5); }
-.pitch-pill.c-blue{ background: linear-gradient(90deg, #8ccfff, #5ea8ff); box-shadow:0 0 6px rgba(140,190,255,.5); }
+.pitch-pill.c-green{ background: linear-gradient(180deg, #ecffe0, #7be07b 55%, #2fae4f); box-shadow:0 0 6px rgba(140,255,140,.6); }
+.pitch-pill.c-pink{ background: linear-gradient(180deg, #ffe6f5, #ff8cd0 55%, #e0459c); box-shadow:0 0 6px rgba(255,140,200,.6); }
+.pitch-pill.c-blue{ background: linear-gradient(180deg, #e2f4ff, #6fc4ff 55%, #2a8fe0); box-shadow:0 0 6px rgba(140,190,255,.6); }
+.pitch-pill.is-gap{ background: transparent; box-shadow:none; }
+
+/* 通り過ぎた後に残る、虹色のキラキラの軌跡 */
+.pitch-trail{
+  position:absolute; top:0; bottom:0; left:0; width:0%;
+  background: linear-gradient(90deg,
+    rgba(255,94,108,.32), rgba(255,178,71,.32), rgba(255,224,102,.32), rgba(140,255,140,.32),
+    rgba(94,203,255,.32), rgba(140,157,255,.32), rgba(214,140,255,.32));
+  overflow:hidden; pointer-events:none;
+}
+.pitch-trail::after{
+  content:''; position:absolute; inset:0;
+  background-image:
+    radial-gradient(circle, #fff 1.2px, transparent 1.6px),
+    radial-gradient(circle, #fff 1px, transparent 1.4px);
+  background-size: 22px 22px, 14px 14px;
+  background-position: 0 0, 10px 8px;
+  opacity:.5;
+  animation: trailTwinkle 1s steps(2) infinite;
+}
+@keyframes trailTwinkle{ 0%,100%{ opacity:.2; } 50%{ opacity:.65; } }
 
 .pitch-cursor{
-  position:absolute; top:2px; bottom:2px; left:0;
+  position:absolute; top:-6px; bottom:-6px; left:0;
   width:2px; background: #fff; box-shadow: 0 0 8px #fff;
+  z-index:3;
 }
 .pitch-cursor::before{
   content:''; position:absolute; top:-3px; left:-5px;
   width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
   border-top:8px solid #ff5e6c;
 }
+
+/* しゃくり・こぶし・フォール・ビブラートを示す、バー上部のアイコン */
+.pitch-icon{
+  position:absolute; top:-22px; transform: translateX(-50%);
+  font-size:16px; font-weight:800; line-height:1;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
+}
+
 
 .pitch-stats{
   display:flex; flex-wrap:wrap; align-items:center; gap:16px;
