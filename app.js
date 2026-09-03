@@ -354,20 +354,48 @@ async function playNextByArtist(){
 }
 
 // ---------- 曲名からアーティスト名を推測 ----------
+// 動画タイトルから、歌詞検索に使う「素の曲名」を作る。
+// ライブ・カバー・リミックスなどの付記を段階的に取り除けるよう、複数バージョンを返す。
+function cleanTitleVariants(rawTitle){
+  let base = rawTitle
+    .replace(/\(Official.*?\)|\[Official.*?\]|\(MV\)|\[MV\]|Official Music Video|Official Video|Lyric Video|Music Video|\bMV\b/gi, '')
+    .trim();
+
+  // 括弧内の補足（Live, Remix, Cover等）を除いたバージョン
+  const noBrackets = base.replace(/[（(].*?[）)]|[［\[].*?[］\]]/g, '').trim();
+
+  // ライブ・カバー・リミックス等を示す語自体を取り除いたバージョン（括弧の外にある場合にも対応）
+  const versionWords = /(live|acoustic|remix|cover|instrumental|karaoke|session|ver\.?|version|tour|concert|弾き語り|ライブ|生歌|アコースティック|カバー|リミックス)/gi;
+  const noVersionWords = noBrackets.replace(versionWords, '').replace(/[-–—]\s*$/, '').trim();
+
+  return [...new Set([base, noBrackets, noVersionWords].filter(Boolean))];
+}
+
 function guessTrackInfo(v){
-  let title = decodeHTML(v.title);
-  title = title.replace(/\(Official.*?\)|\[Official.*?\]|\(MV\)|\[MV\]|Official Music Video|Official Video|Lyric Video|Music Video|MV|フル|Full ver\.?/gi, '').trim();
+  const rawTitle = decodeHTML(v.title);
+  const variants = cleanTitleVariants(rawTitle);
+  const primaryTitle = variants[0];
 
   const separators = [' - ', ' – ', ' — ', '「', '『', '｜', '/'];
   for(const sep of separators){
-    if(title.includes(sep)){
-      const parts = title.split(sep);
+    if(primaryTitle.includes(sep)){
+      const parts = primaryTitle.split(sep);
       if(parts.length >= 2){
-        return { artist: parts[0].trim(), track: parts.slice(1).join(sep).replace(/[」』]/g, '').trim() };
+        const artist = parts[0].trim();
+        const track = parts.slice(1).join(sep).replace(/[」』]/g, '').trim();
+        return {
+          artist,
+          track,
+          trackVariants: variants.map(t => {
+            const p = t.split(sep);
+            return p.length >= 2 ? p.slice(1).join(sep).replace(/[」』]/g, '').trim() : t;
+          }),
+        };
       }
     }
   }
-  return { artist: decodeHTML(v.channel).replace(/\s*-\s*Topic$/i, '').trim(), track: title };
+  const artist = decodeHTML(v.channel).replace(/\s*-\s*Topic$/i, '').trim();
+  return { artist, track: primaryTitle, trackVariants: variants };
 }
 
 // ---------- LRCLIB歌詞取得・解析 ----------
@@ -385,6 +413,41 @@ async function fetchLyricsFromLrclib(track, artist){
     return null;
   }
 }
+
+// LRCLIBの自由入力検索（q）で、曲名だけの緩い条件で探す最終手段
+async function fetchLyricsFromLrclibFreeText(query){
+  const url = new URL('https://lrclib.net/api/search');
+  url.searchParams.set('q', query);
+  try{
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const data = await res.json();
+    const withSync = data.find(item => item.syncedLyrics);
+    return withSync ? withSync.syncedLyrics : null;
+  } catch(e){
+    return null;
+  }
+}
+
+// ライブ版・カバー版などで見つからない場合に備え、条件を段階的に緩めながら歌詞を探す
+async function findLyricsWithFallback(v){
+  const { artist, track, trackVariants } = guessTrackInfo(v);
+  const triedTracks = trackVariants && trackVariants.length ? trackVariants : [track];
+
+  // ① 曲名の各バージョン（そのまま → 括弧除去 → Live/Cover等の語も除去）× アーティスト名で順に試す
+  for(const t of triedTracks){
+    const lrc = await fetchLyricsFromLrclib(t, artist);
+    if(lrc) return { lrc, usedTrack: t, usedArtist: artist };
+  }
+
+  // ② 一番シンプルにした曲名で、アーティスト名の自由入力検索を試す
+  const simplestTrack = triedTracks[triedTracks.length - 1];
+  const freeLrc = await fetchLyricsFromLrclibFreeText(`${artist} ${simplestTrack}`);
+  if(freeLrc) return { lrc: freeLrc, usedTrack: simplestTrack, usedArtist: artist };
+
+  return { lrc: null, usedTrack: simplestTrack, usedArtist: artist };
+}
+
 function parseLrc(lrcText){
   const lines = [];
   lrcText.split('\n').forEach(rawLine => {
@@ -412,13 +475,12 @@ async function loadKaraokeLyrics(v){
   el.karaokeLines.innerHTML = '';
   el.karaokeStatus.textContent = '歌詞を検索中…';
 
-  const { artist, track } = guessTrackInfo(v);
-  const lrc = await fetchLyricsFromLrclib(track, artist);
-  if(!lrc){
-    el.karaokeStatus.textContent = `歌詞が見つかりませんでした（検索語: ${artist} / ${track}）。「✎ 歌詞を編集」から手動で貼り付けることもできます。`;
+  const result = await findLyricsWithFallback(v);
+  if(!result.lrc){
+    el.karaokeStatus.textContent = `歌詞が見つかりませんでした（検索語: ${result.usedArtist} / ${result.usedTrack}）。「✎ 歌詞を編集」から手動で貼り付けることもできます。`;
     return;
   }
-  applyLyrics(parseLrc(lrc));
+  applyLyrics(parseLrc(result.lrc));
 }
 
 // 解析済みの歌詞データを反映し、必要なら同期ループを開始する
