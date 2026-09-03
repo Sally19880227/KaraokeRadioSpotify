@@ -111,19 +111,27 @@ button{ font-family:inherit; cursor:pointer; }
 /* ---------- カラオケビュー ---------- */
 .karaoke-view{
   position:fixed; inset:0; z-index: 100;
-  background:
-    radial-gradient(ellipse 60% 45% at 15% 10%, rgba(255,80,140,0.22), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 85% 15%, rgba(90,140,255,0.22), transparent 60%),
-    radial-gradient(ellipse 70% 55% at 50% 100%, rgba(255,209,102,0.14), transparent 65%),
-    #0a0a0e;
-  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
-  animation: stageDrift 18s ease-in-out infinite;
+  background:#0a0a0e;
   display:flex; flex-direction:column;
   overflow:hidden;
 }
-@keyframes stageDrift{
-  0%,100%{ background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
-  50%{ background-position: 20% 20%, 80% 30%, 40% 90%, 0 0; }
+
+/* 背景の風景写真（2枚重ねでクロスフェード） */
+.karaoke-bg-photo{
+  position:absolute; inset:0; z-index:-2;
+  background-size: cover; background-position: center;
+  opacity:0; transition: opacity 2.2s ease;
+  filter: brightness(0.5) saturate(0.9);
+}
+.karaoke-bg-photo.is-active{ opacity:1; }
+
+/* 写真の上にかける色味と、文字を読みやすくするための暗幕 */
+.karaoke-bg-tint{
+  position:absolute; inset:0; z-index:-1;
+  background:
+    radial-gradient(ellipse 60% 45% at 15% 10%, rgba(255,80,140,0.20), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 15%, rgba(90,140,255,0.20), transparent 60%),
+    linear-gradient(180deg, rgba(8,8,12,0.45) 0%, rgba(8,8,12,0.72) 100%);
 }
 
 .karaoke-notes{

@@ -22,6 +22,8 @@ const state = {
   karaokeOffset: 0,
   karaokeRate: 1.0,
   calibrationTaps: [],
+  bgTimer: null,
+  bgActiveLayer: 'a',
 };
 
 const el = {
@@ -226,12 +228,60 @@ function showResultsView(){
   el.resultsView.classList.remove('hidden');
   if(state.player && state.player.stopVideo) state.player.stopVideo();
   stopKaraokeSyncLoop();
+  stopBackgroundSlideshow();
 }
 function showKaraokeView(){
   el.resultsView.classList.add('hidden');
   el.karaokeView.classList.remove('hidden');
+  startBackgroundSlideshow();
 }
 el.backToSearchBtn.addEventListener('click', showResultsView);
+
+// ---------- 背景の風景写真スライドショー（Picsum Photos / APIキー不要） ----------
+const SCENIC_PHOTO_IDS = [1015, 1018, 1019, 1021, 1024, 1035, 1036, 1039, 1043, 1044, 1047, 1049, 1053, 1056, 1057, 1060, 1063, 1067, 1080];
+let bgOrder = shuffleArray(SCENIC_PHOTO_IDS);
+let bgPos = 0;
+
+function shuffleArray(arr){
+  const a = [...arr];
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function nextBackgroundPhoto(){
+  if(bgPos >= bgOrder.length){
+    bgOrder = shuffleArray(SCENIC_PHOTO_IDS);
+    bgPos = 0;
+  }
+  const id = bgOrder[bgPos++];
+  const url = `https://picsum.photos/id/${id}/1600/900`;
+
+  // 先読みしてから切り替えることで、読み込み中の空白を防ぐ
+  const img = new Image();
+  img.onload = () => {
+    const activeIsA = state.bgActiveLayer !== 'b';
+    const nextEl = document.getElementById(activeIsA ? 'bg-layer-b' : 'bg-layer-a');
+    const prevEl = document.getElementById(activeIsA ? 'bg-layer-a' : 'bg-layer-b');
+    nextEl.style.backgroundImage = `url('${url}')`;
+    nextEl.classList.add('is-active');
+    prevEl.classList.remove('is-active');
+    state.bgActiveLayer = activeIsA ? 'b' : 'a';
+  };
+  img.src = url;
+}
+
+function startBackgroundSlideshow(){
+  nextBackgroundPhoto();
+  stopBackgroundSlideshow();
+  state.bgTimer = setInterval(nextBackgroundPhoto, 20000);
+}
+function stopBackgroundSlideshow(){
+  if(state.bgTimer) clearInterval(state.bgTimer);
+  state.bgTimer = null;
+}
 
 // ---------- YouTube Player（非表示・音声のみ） ----------
 function onYouTubeIframeAPIReady(){
