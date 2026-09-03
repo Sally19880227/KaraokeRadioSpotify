@@ -375,6 +375,16 @@ function playTrack(v, indexHint){
 }
 
 // ---------- 自動選曲（同じアーティストで検索） ----------
+// 次に検索するキーワードを決める：現在の曲のアーティスト名か、過去の検索履歴からランダムに1つ（半々の確率）
+function pickNextSearchQuery(currentArtist){
+  const history = getSearchHistory();
+  if(history.length && Math.random() < 0.5){
+    const query = history[Math.floor(Math.random() * history.length)];
+    return { query, fromHistory: true };
+  }
+  return { query: currentArtist, fromHistory: false };
+}
+
 async function playNextByArtist(){
   const current = state.currentList[state.currentIndex];
   if(!current) return;
@@ -382,10 +392,15 @@ async function playNextByArtist(){
   const { artist } = guessTrackInfo(current);
   if(!artist) return;
 
-  el.karaokeStatus.textContent = '次の曲を探しています…';
+  const { query, fromHistory } = pickNextSearchQuery(artist);
+
+  el.karaokeStatus.textContent = fromHistory
+    ? `検索履歴「${query}」から次の曲を探しています…`
+    : '次の曲を探しています…';
+
   const data = await ytFetch('search', {
     part: 'snippet',
-    q: artist,
+    q: query,
     type: 'video',
     videoCategoryId: '10',
     maxResults: 15,
