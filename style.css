@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root{
+  --bg: #0c0c10;
+  --surface: #17171f;
+  --surface-raised: #1f1f29;
+  --line: #2a2a34;
+  --text: #e8e8ee;
+  --text-dim: #7a7a88;
+  --accent: #ffd166;
+  --accent-glow: rgba(255, 209, 102, 0.35);
+  --radius: 12px;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0; background: var(--bg); color: var(--text);
+  font-family:'Noto Sans JP','Sora',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button{ font-family:inherit; cursor:pointer; }
+.hidden{ display:none !important; }
+
+/* YouTubeプレイヤーは音声のみ利用し、画面には一切表示しない */
+.yt-player-hidden{
+  position:absolute; width:1px; height:1px; overflow:hidden;
+  opacity:0; pointer-events:none; left:-9999px;
+}
+
+/* ---------- Header ---------- */
+.topbar{
+  display:flex; align-items:center; gap:14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(12,12,16,0.95);
+  position: sticky; top:0; z-index: 50;
+}
+.brand{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.brand-mark{
+  width:30px; height:30px; border-radius:50%;
+  background: var(--accent); color:#0c0c10;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.brand-name{ font-family:'Sora'; font-weight:800; font-size:17px; letter-spacing:-0.01em; }
+
+.search-form{
+  display:flex; flex:1; max-width:480px;
+  background: var(--surface); border:1px solid var(--line); border-radius:999px; overflow:hidden;
+}
+.search-form input{
+  flex:1; border:none; background:transparent; color:var(--text);
+  padding:9px 16px; font-size:14px; outline:none;
+}
+.search-form button{
+  border:none; background:transparent; color: var(--accent);
+  padding:0 18px; font-size:14px; font-weight:700; border-left:1px solid var(--line);
+}
+.icon-btn{
+  border:1px solid var(--line); background: var(--surface); color: var(--text-dim);
+  width:36px; height:36px; border-radius:50%; font-size:16px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* ---------- 検索履歴 ---------- */
+.search-history{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  margin: 16px 20px 0; padding: 12px 16px;
+  background: var(--surface); border:1px solid var(--line); border-radius: var(--radius);
+}
+.search-history-label{ font-size:12.5px; color: var(--text-dim); flex-shrink:0; }
+.search-history-chips{ display:flex; flex-wrap:wrap; gap:8px; flex:1; }
+.search-history-chip{
+  background: var(--surface-raised); border:1px solid var(--line); color: var(--text);
+  font-size:12.5px; padding:6px 13px; border-radius:999px;
+}
+.search-history-chip:hover{ border-color: var(--accent); }
+.search-history-clear{
+  background:transparent; border:none; color: var(--text-dim);
+  font-size:12px; text-decoration: underline; flex-shrink:0; margin-left:auto;
+}
+
+/* ---------- 検索結果 ---------- */
+.results-view{ max-width: 900px; margin: 0 auto; padding: 20px; }
+.section-heading{ font-size:15px; font-weight:700; color: var(--text); margin: 4px 0 16px; }
+.results-list{ display:flex; flex-direction:column; gap:10px; }
+.result-card{
+  display:flex; align-items:center; gap:14px;
+  background: var(--surface); border:1px solid var(--line); border-radius: var(--radius);
+  padding: 10px; cursor:pointer; transition: border-color .15s;
+}
+.result-card:hover{ border-color: var(--accent); }
+.result-thumb{
+  width:100px; aspect-ratio:16/9; border-radius:8px; overflow:hidden; flex-shrink:0; background:#000;
+}
+.result-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.result-meta{ min-width:0; }
+.result-title{
+  font-size:14px; font-weight:600; line-height:1.4;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.result-channel{ font-size:12.5px; color: var(--text-dim); margin-top:4px; }
+.status-msg{ text-align:center; color: var(--text-dim); font-size:13px; padding: 26px 0; }
+.load-more{
+  display:block; margin: 10px auto 20px;
+  background: var(--surface); border:1px solid var(--line); color: var(--text);
+  padding: 9px 22px; border-radius: 999px; font-size:13px;
+}
+
+/* ---------- カラオケビュー ---------- */
+.karaoke-view{
+  position:fixed; inset:0; z-index: 100;
+  background: #0a0a0e;
+  display:flex; flex-direction:column;
+}
+.karaoke-topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  padding: 16px 20px; border-bottom:1px solid var(--line); flex-shrink:0;
+}
+.karaoke-meta{ min-width:0; }
+.karaoke-title{
+  font-size:15px; font-weight:700; color: var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 42vw;
+}
+.karaoke-artist{ font-size:12.5px; color: var(--text-dim); margin-top:3px; }
+
+.karaoke-offset{ display:flex; align-items:center; gap:6px; flex:1; min-width:220px; max-width:380px; }
+.karaoke-offset label{ font-size:11.5px; color: var(--text-dim); white-space:nowrap; flex-shrink:0; }
+.karaoke-offset input[type=range]{ flex:1; accent-color: var(--accent); }
+.offset-step-btn{
+  background: var(--surface); border:1px solid var(--line); color: var(--text);
+  font-size:11px; font-weight:700; padding:5px 8px; border-radius:6px; flex-shrink:0;
+}
+.offset-step-btn:hover{ border-color: var(--accent); color: var(--accent); }
+#karaoke-offset-value{ font-size:11.5px; color: var(--text-dim); width:52px; flex-shrink:0; text-align:right; }
+
+.karaoke-close-btn{
+  background: var(--surface); border:1px solid var(--line); color: var(--text);
+  padding:8px 16px; border-radius:999px; font-size:13px; flex-shrink:0;
+}
+.karaoke-close-btn:hover{ border-color: var(--accent); }
+
+.karaoke-body{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding: 24px 20px;
+}
+.karaoke-status{ font-size:13.5px; color: var(--text-dim); margin-bottom:18px; }
+.karaoke-lines{ width:100%; max-width: 96vw; display:flex; flex-direction:column; align-items:center; gap: 4vh; }
+.karaoke-current-line{
+  font-family:'Sora',sans-serif; font-weight:800; line-height:1.25; color: var(--accent);
+  font-size: clamp(32px, 8vw, 140px);
+  text-shadow: 0 0 36px var(--accent-glow);
+  transition: opacity .25s ease;
+}
+.karaoke-next-line{
+  font-family:'Sora',sans-serif; font-weight:600; line-height:1.4; color: var(--text-dim);
+  font-size: clamp(16px, 2.6vw, 30px);
+  transition: opacity .25s ease;
+}
+
+.control-bar{
+  display:flex; align-items:center; justify-content:center; gap:16px;
+  padding: 16px 20px; border-top:1px solid var(--line); flex-shrink:0;
+}
+.control-btn{
+  width:52px; height:52px; border-radius:50%; border:none;
+  background: var(--accent); color:#0c0c10; font-size:19px;
+}
+.control-btn-secondary{ background: var(--surface); color: var(--text); border:1px solid var(--line); width:44px; height:44px; font-size:16px; }
+.now-playing-note{ font-size:12px; color: var(--text-dim); margin-left:6px; }
+
+/* ---------- Modal ---------- */
+.modal{
+  position:fixed; inset:0; background: rgba(6,6,9,0.75);
+  display:flex; align-items:center; justify-content:center; z-index: 200; padding:20px;
+}
+.modal-card{ background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:26px; width:100%; max-width:420px; }
+.modal-card h2{ font-family:'Sora'; font-size:18px; margin:0 0 12px; }
+.modal-desc{ font-size:13px; color: var(--text-dim); line-height:1.6; margin-bottom:16px; }
+#api-key-input{
+  width:100%; background: var(--bg); border:1px solid var(--line); color:var(--text);
+  padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:16px; outline:none;
+}
+.modal-actions{ display:flex; gap:10px; }
+.primary-btn{ background: var(--accent); color:#0c0c10; border:none; font-weight:700; padding:9px 18px; border-radius:10px; font-size:13px; }
+.ghost-btn{ background:transparent; color: var(--text-dim); border:1px solid var(--line); padding:9px 18px; border-radius:999px; font-size:13px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px){
+  .topbar{ flex-wrap:wrap; }
+  .search-form{ order:3; max-width:none; width:100%; }
+  .karaoke-title{ max-width:46vw; }
+  .karaoke-offset{ order:3; flex-basis:100%; max-width:none; }
+  .result-thumb{ width:76px; }
+}

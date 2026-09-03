@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Karaoke Radio — 歌詞カラオケ専用プレイヤー</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">🎤</span>
+      <span class="brand-name">Karaoke Radio</span>
+    </div>
+
+    <form id="search-form" class="search-form" autocomplete="off">
+      <input id="search-input" type="text" placeholder="曲名・アーティスト名で検索" aria-label="曲を検索">
+      <button type="submit" aria-label="検索">検索</button>
+    </form>
+
+    <button id="settings-btn" class="icon-btn" aria-label="設定">⚙</button>
+  </header>
+
+  <div id="search-history" class="search-history hidden">
+    <span class="search-history-label">最近の検索:</span>
+    <div id="search-history-chips" class="search-history-chips"></div>
+    <button id="search-history-clear" class="search-history-clear">履歴を消去</button>
+  </div>
+
+  <!-- 検索結果リスト（曲を選ぶまで表示） -->
+  <section id="results-view" class="results-view">
+    <h2 class="section-heading" id="results-heading">曲を検索してください</h2>
+    <div id="results-list" class="results-list"></div>
+    <div id="status-msg" class="status-msg"></div>
+    <button id="load-more" class="load-more hidden">もっと見る</button>
+  </section>
+
+  <!-- カラオケ再生ビュー（曲を選ぶと表示） -->
+  <section id="karaoke-view" class="karaoke-view hidden">
+    <div class="karaoke-topbar">
+      <div class="karaoke-meta">
+        <div id="karaoke-title" class="karaoke-title">&nbsp;</div>
+        <div id="karaoke-artist" class="karaoke-artist"></div>
+      </div>
+      <div class="karaoke-offset">
+        <label for="karaoke-offset-slider">歌詞のズレ調整</label>
+        <button id="karaoke-offset-minus" class="offset-step-btn" aria-label="0.2秒早める">−0.2</button>
+        <input type="range" id="karaoke-offset-slider" min="-10" max="10" value="0" step="0.1">
+        <button id="karaoke-offset-plus" class="offset-step-btn" aria-label="0.2秒遅らせる">+0.2</button>
+        <span id="karaoke-offset-value">0.0秒</span>
+      </div>
+      <button id="back-to-search-btn" class="karaoke-close-btn">🔍 検索に戻る</button>
+    </div>
+
+    <div class="karaoke-body">
+      <div id="karaoke-status" class="karaoke-status"></div>
+      <div class="karaoke-lines">
+        <div id="karaoke-current-line" class="karaoke-current-line">&nbsp;</div>
+        <div id="karaoke-next-line" class="karaoke-next-line">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="control-bar">
+      <button id="play-pause-btn" class="control-btn" aria-label="再生/一時停止">⏸</button>
+      <button id="skip-btn" class="control-btn control-btn-secondary" aria-label="次の曲へ">⏭</button>
+      <div class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
+    </div>
+  </section>
+
+  <!-- 動画プレイヤーは音声再生のみに使用し、画面には表示しない -->
+  <div id="yt-player" class="yt-player-hidden"></div>
+
+</div>
+
+<!-- 設定モーダル -->
+<div id="settings-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2>設定</h2>
+    <p class="modal-desc">YouTube Data API v3 のAPIキーを入力してください。キーはこの端末のブラウザにのみ保存され、外部には送信されません。</p>
+    <input id="api-key-input" type="text" placeholder="APIキーを入力">
+    <div class="modal-actions">
+      <button id="api-key-save" class="primary-btn">保存</button>
+      <button id="api-key-cancel" class="ghost-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="app.js"></script>
+</body>
+</html>
