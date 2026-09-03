@@ -353,36 +353,6 @@ button{ font-family:inherit; cursor:pointer; }
   50%{ opacity:1; transform: scale(1.1) rotate(90deg); }
 }
 
-/* 曲のテンポ（歌詞の間隔）に合わせて勢いが変わる、ビリビリ線（稲妻状） */
-.k-current-wrap{ --shock-speed: 0.5s; --shock-opacity: 0.5; }
-.k-shock-lines{ position:absolute; inset:-30% -6% auto -6%; height:160%; pointer-events:none; z-index:1; }
-.k-shock-lines span{
-  position:absolute; width:5px; height:64px;
-  background: linear-gradient(180deg, #ffffff, var(--accent) 55%, transparent);
-  clip-path: polygon(50% 0%, 85% 18%, 55% 28%, 95% 50%, 45% 58%, 80% 78%, 20% 100%, 45% 62%, 5% 52%, 45% 42%, 10% 24%, 50% 0%);
-  opacity:0;
-  filter: drop-shadow(0 0 6px var(--accent-glow));
-  animation-name: shockFlicker;
-  animation-duration: var(--shock-speed);
-  animation-timing-function: steps(2, jump-none);
-  animation-iteration-count: infinite;
-}
-.k-shock-lines span:nth-child(1){ left:2%;  top:10%;  transform: rotate(-18deg); animation-delay:0s; }
-.k-shock-lines span:nth-child(2){ left:16%; top:65%;  transform: rotate(12deg) scale(.8); animation-delay:.08s; }
-.k-shock-lines span:nth-child(3){ left:92%; top:8%;   transform: rotate(20deg) scaleX(-1); animation-delay:.15s; }
-.k-shock-lines span:nth-child(4){ left:80%; top:62%;  transform: rotate(-14deg) scaleX(-1) scale(.85); animation-delay:.05s; }
-.k-shock-lines span:nth-child(5){ left:46%; top:-8%;  transform: rotate(4deg) scale(.7); animation-delay:.12s; }
-.k-shock-lines span:nth-child(6){ left:50%; top:88%;  transform: rotate(-6deg) scaleY(-1) scale(.75); animation-delay:.2s; }
-@keyframes shockFlicker{
-  0%{ opacity:0; }
-  35%{ opacity: var(--shock-opacity); }
-  55%{ opacity:0; }
-  80%{ opacity: calc(var(--shock-opacity) * 0.7); }
-  100%{ opacity:0; }
-}
-.k-current-wrap.is-intense .k-shock-lines span{
-  filter: drop-shadow(0 0 10px var(--accent-glow)) drop-shadow(0 0 18px #fff);
-}
 
 .control-bar{
   display:flex; align-items:center; justify-content:center; gap:16px;

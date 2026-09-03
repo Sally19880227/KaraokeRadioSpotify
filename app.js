@@ -726,11 +726,6 @@ function renderKaraokeWindow(idx){
         sparkles.className = 'k-sparkles';
         sparkles.innerHTML = '<span>✦</span>'.repeat(8);
         wrap.appendChild(sparkles);
-
-        const shockLines = document.createElement('div');
-        shockLines.className = 'k-shock-lines';
-        shockLines.innerHTML = '<span></span>'.repeat(6);
-        wrap.appendChild(shockLines);
       }
       el.karaokeLines.appendChild(wrap);
       return;
@@ -812,7 +807,6 @@ function applyRateAndOffset(rate, offset){
 // 現在の行から次の行までの時間に合わせて、文字が色付いていくアニメーションの速さを設定する
 function applyKaraokeFillAnimation(idx){
   const currentEl = el.karaokeLines.querySelector('.k-current');
-  const wrapEl = el.karaokeLines.querySelector('.k-current-wrap');
   if(!currentEl || idx < 0){
     if(currentEl) currentEl.style.animation = 'none';
     return;
@@ -826,16 +820,6 @@ function applyKaraokeFillAnimation(idx){
   // 強制的にリフローさせてアニメーションを最初から再生させる
   void currentEl.offsetWidth;
   currentEl.style.animation = `karaokeFill ${duration}s linear forwards`;
-
-  // 行の間隔が短い（テンポが速い＝曲が盛り上がっている）ほど、ビリビリ線を激しく速く動かす
-  if(wrapEl){
-    const intensity = 1 - (duration - 1.2) / (8 - 1.2); // 0（穏やか）〜1（激しい）
-    const shockSpeed = (0.7 - intensity * 0.5).toFixed(2); // 0.2s（激しい）〜0.7s（穏やか）
-    const shockOpacity = (0.35 + intensity * 0.55).toFixed(2);
-    wrapEl.style.setProperty('--shock-speed', `${shockSpeed}s`);
-    wrapEl.style.setProperty('--shock-opacity', shockOpacity);
-    wrapEl.classList.toggle('is-intense', intensity > 0.55);
-  }
 
   // 音程バー（演出用）：行が変わるたびに左端からやり直し、その行が終わるタイミングで右端まで進む
   const bumpedKey = bumpPitchStats();
