@@ -21,6 +21,7 @@ const state = {
   karaokeSyncTimer: null,
   karaokeOffset: 0,
   karaokeRate: 1.0,
+  calibrationTaps: [],
 };
 
 const el = {
@@ -405,6 +406,7 @@ async function loadKaraokeLyrics(v){
   stopKaraokeSyncLoop();
   state.lyrics = [];
   state.karaokeActiveIndex = -1;
+  state.calibrationTaps = [];
   state.currentVideoForLyrics = v;
   el.syncHint.textContent = '同じアーティストの曲を自動的に流し続けます';
   el.karaokeLines.innerHTML = '';
@@ -479,25 +481,66 @@ function renderKaraokeWindow(idx){
   applyKaraokeFillAnimation(idx);
 }
 
-// タップされた行が「今まさに歌われている」ことにして、ズレ調整(offset)をその場で計算し直す
+// タップされた行が「今まさに歌われている」ことにして同期し直す。
+// タップ履歴が2点以上たまり、かつ十分に離れていれば、速度(rate)とズレ(offset)を
+// 最小二乗法でまとめて自動計算する。1点しかない場合はズレだけをその場で合わせる。
 function resyncToLine(i){
   if(!state.player || !state.player.getCurrentTime) return;
   const line = state.lyrics[i];
   if(!line) return;
   const videoTime = state.player.getCurrentTime();
-  let offset = (videoTime * state.karaokeRate) - line.time;
 
-  const offsetMin = parseFloat(el.karaokeOffsetSlider.min);
-  const offsetMax = parseFloat(el.karaokeOffsetSlider.max);
-  offset = Math.min(offsetMax, Math.max(offsetMin, offset));
+  state.calibrationTaps.push({ videoTime, lyricTime: line.time });
+  if(state.calibrationTaps.length > 10) state.calibrationTaps.shift();
 
-  state.karaokeOffset = Math.round(offset * 10) / 10;
-  el.karaokeOffsetSlider.value = state.karaokeOffset;
-  updateKaraokeOffsetDisplay();
+  const times = state.calibrationTaps.map(p => p.videoTime);
+  const spread = Math.max(...times) - Math.min(...times);
+
+  if(state.calibrationTaps.length >= 2 && spread >= 5){
+    const fit = computeLinearFit(state.calibrationTaps);
+    applyRateAndOffset(fit.rate, fit.offset);
+    el.syncHint.textContent = `タップ履歴（${state.calibrationTaps.length}点）から速度とズレを自動調整しました（速度: ${Math.round(state.karaokeRate*100)}% / ズレ: ${state.karaokeOffset.toFixed(1)}秒）`;
+  } else {
+    const offset = (videoTime * state.karaokeRate) - line.time;
+    applyRateAndOffset(state.karaokeRate, offset);
+    el.syncHint.textContent = `「${line.text}」に合わせました。曲が進んでからもう一度タップすると、速度も自動調整されます。`;
+  }
 
   state.karaokeActiveIndex = i;
   renderKaraokeWindow(i);
-  el.syncHint.textContent = `「${line.text}」に合わせました。`;
+}
+
+// 記録したタップ（動画時間 × 歌詞時間）の点群から、最小二乗法で速度(rate)とズレ(offset)を求める
+function computeLinearFit(points){
+  const n = points.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+  points.forEach(p => {
+    sumX += p.videoTime; sumY += p.lyricTime;
+    sumXY += p.videoTime * p.lyricTime; sumXX += p.videoTime * p.videoTime;
+  });
+  const denom = n * sumXX - sumX * sumX;
+  if(Math.abs(denom) < 1e-6){
+    return { rate: state.karaokeRate, offset: state.karaokeOffset };
+  }
+  const rate = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - rate * sumX) / n;
+  return { rate, offset: -intercept };
+}
+
+// 速度・ズレをスライダーの範囲内に収めつつ反映する
+function applyRateAndOffset(rate, offset){
+  const rateMin = parseFloat(el.karaokeRateSlider.min);
+  const rateMax = parseFloat(el.karaokeRateSlider.max);
+  const offsetMin = parseFloat(el.karaokeOffsetSlider.min);
+  const offsetMax = parseFloat(el.karaokeOffsetSlider.max);
+
+  state.karaokeRate = Math.round(Math.min(rateMax, Math.max(rateMin, rate)) * 1000) / 1000;
+  state.karaokeOffset = Math.round(Math.min(offsetMax, Math.max(offsetMin, offset)) * 10) / 10;
+
+  el.karaokeRateSlider.value = state.karaokeRate;
+  el.karaokeOffsetSlider.value = state.karaokeOffset;
+  updateKaraokeRateDisplay();
+  updateKaraokeOffsetDisplay();
 }
 
 // 現在の行から次の行までの時間に合わせて、文字が色付いていくアニメーションの速さを設定する
