@@ -242,10 +242,32 @@ function onYouTubeIframeAPIReady(){
     events: {
       onReady: () => { state.playerReady = true; },
       onStateChange: onPlayerStateChange,
+      onError: onPlayerError,
     }
   });
 }
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+// 再生できなかった場合の処理（多くは著作権者が埋め込み再生を許可していないケース）
+function onPlayerError(e){
+  stopKaraokeSyncLoop();
+  let msg = 'この曲は再生できませんでした。';
+  if(e.data === 101 || e.data === 150){
+    msg = 'この動画は権利者の設定により、外部サイトでの再生が許可されていません。';
+  } else if(e.data === 100){
+    msg = 'この動画は削除されているか非公開のため再生できません。';
+  } else if(e.data === 2){
+    msg = '動画IDが正しく認識できませんでした。';
+  }
+  el.karaokeStatus.textContent = `${msg} 自動的に別の曲を探します…`;
+
+  // 自動再生の流れの中であれば、同じアーティストの別の曲を自動で探して再生を続ける
+  if(state.currentIndex >= 0){
+    playNextByArtist();
+  } else {
+    setTimeout(showResultsView, 2000);
+  }
+}
 
 function onPlayerStateChange(e){
   if(e.data === YT.PlayerState.PLAYING){

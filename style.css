@@ -22,10 +22,11 @@ body{
 button{ font-family:inherit; cursor:pointer; }
 .hidden{ display:none !important; }
 
-/* YouTubeプレイヤーは音声のみ利用し、画面には一切表示しない */
+/* YouTubeプレイヤーは音声のみ利用し、画面には一切表示しない
+   （0に近いサイズだと再生が不安定になることがあるため、実寸は確保しつつ画面外に配置する） */
 .yt-player-hidden{
-  position:absolute; width:1px; height:1px; overflow:hidden;
-  opacity:0; pointer-events:none; left:-9999px;
+  position:absolute; width:320px; height:180px; overflow:hidden;
+  opacity:0; pointer-events:none; left:-9999px; top:-9999px;
 }
 
 /* ---------- Header ---------- */
