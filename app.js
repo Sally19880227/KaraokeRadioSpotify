@@ -53,8 +53,8 @@ const el = {
   karaokeStatus: document.getElementById('karaoke-status'),
   lyricCandidates: document.getElementById('lyric-candidates'),
   karaokeLines: document.getElementById('karaoke-lines'),
-  pitchTrack: document.getElementById('pitch-track'),
-  pitchTrail: document.getElementById('pitch-trail'),
+  pitchTrackBase: document.getElementById('pitch-track-base'),
+  pitchTrackColor: document.getElementById('pitch-track-color'),
   pitchCursor: document.getElementById('pitch-cursor'),
   statShakuri: document.getElementById('stat-shakuri'),
   statKobushi: document.getElementById('stat-kobushi'),
@@ -648,9 +648,10 @@ async function loadKaraokeLyrics(v){
   el.statFall.textContent = '0';
   el.statVibrato.textContent = '0';
   if(el.pitchSegments) el.pitchSegments.querySelectorAll('.seg').forEach(s => s.classList.remove('is-current'));
-  if(el.pitchTrack) el.pitchTrack.innerHTML = '';
+  if(el.pitchTrackBase) el.pitchTrackBase.innerHTML = '';
+  if(el.pitchTrackColor) el.pitchTrackColor.innerHTML = '';
   if(el.pitchCursor){ el.pitchCursor.style.transition = 'none'; el.pitchCursor.style.left = '0%'; }
-  if(el.pitchTrail){ el.pitchTrail.style.transition = 'none'; el.pitchTrail.style.width = '0%'; }
+  if(el.pitchTrackColor){ el.pitchTrackColor.style.transition = 'none'; el.pitchTrackColor.style.clipPath = 'inset(0 100% 0 0)'; }
 
   const result = await findLyricsWithFallback(v);
   if(!result.lrc){
@@ -836,8 +837,9 @@ const TECHNIQUE_ICONS = {
 
 // 演出用の「音程バー」の見た目をランダムに生成する（実際の音程データではない）
 function regeneratePitchTrack(bumpedKey){
-  if(!el.pitchTrack) return;
-  el.pitchTrack.innerHTML = '';
+  if(!el.pitchTrackBase || !el.pitchTrackColor) return;
+  el.pitchTrackBase.innerHTML = '';
+  el.pitchTrackColor.innerHTML = '';
   const colors = ['', 'c-green', 'c-pink', 'c-blue'];
   const pillCount = 34 + Math.floor(Math.random() * 16);
 
@@ -849,14 +851,14 @@ function regeneratePitchTrack(bumpedKey){
   const iconIndex = Math.floor(pillCount * (0.05 + Math.random() * 0.5));
 
   // 階段状の高さレベルを作る：同じ高さがしばらく続き（直線区間）、時々上下にジャンプする
-  const levelCount = 6;      // 高さの段階数
-  const maxOffsetPx = 62;    // 一番低い位置までの下げ幅
+  const levelCount = 6;
+  const maxOffsetPx = 62;
   let level = Math.floor(levelCount / 2);
   let runLength = 3 + Math.floor(Math.random() * 3);
 
   for(let i = 0; i < pillCount; i++){
     if(runLength <= 0){
-      const stay = Math.random() < 0.3; // たまに同じ高さのまま伸ばす（直線区間）
+      const stay = Math.random() < 0.3;
       if(!stay){
         const jump = (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 2));
         level = Math.min(levelCount - 1, Math.max(0, level + jump));
@@ -865,16 +867,21 @@ function regeneratePitchTrack(bumpedKey){
     }
     runLength--;
 
-    const pill = document.createElement('div');
-    if(gapPositions.has(i)){
-      pill.className = 'pitch-pill is-gap';
-      pill.style.flex = '0.6 1 auto';
-    } else {
-      const color = Math.random() < 0.8 ? '' : colors[Math.floor(Math.random() * colors.length)];
-      pill.className = `pitch-pill ${color}`;
-      pill.style.flex = `${(1 + Math.random() * 0.7).toFixed(2)} 1 auto`;
-      pill.style.marginTop = `${Math.round((level / (levelCount - 1)) * maxOffsetPx)}px`;
-    }
+    const isGap = gapPositions.has(i);
+    const flex = isGap ? '0.6 1 auto' : `${(1 + Math.random() * 0.7).toFixed(2)} 1 auto`;
+    const marginTop = isGap ? '0' : `${Math.round((level / (levelCount - 1)) * maxOffsetPx)}px`;
+    const colorClass = (!isGap && Math.random() >= 0.8) ? colors[Math.floor(Math.random() * colors.length)] : '';
+
+    // 同じ形状・同じ高さのブロックを、グレー版とカラー版の両方に同一データで生成する
+    const basePill = document.createElement('div');
+    basePill.className = `pitch-pill ${isGap ? 'is-gap' : ''}`;
+    basePill.style.flex = flex;
+    basePill.style.marginTop = marginTop;
+
+    const colorPill = document.createElement('div');
+    colorPill.className = `pitch-pill ${isGap ? 'is-gap' : colorClass}`;
+    colorPill.style.flex = flex;
+    colorPill.style.marginTop = marginTop;
 
     if(bumpedKey && i === iconIndex){
       const icon = document.createElement('span');
@@ -883,24 +890,26 @@ function regeneratePitchTrack(bumpedKey){
       icon.textContent = meta.symbol;
       icon.style.color = meta.color;
       icon.style.left = '50%';
-      pill.appendChild(icon);
+      basePill.appendChild(icon);
     }
-    el.pitchTrack.appendChild(pill);
+
+    el.pitchTrackBase.appendChild(basePill);
+    el.pitchTrackColor.appendChild(colorPill);
   }
 }
 
 // 音程バーのカーソルと、通過後に残る虹色のキラキラの軌跡を、行の長さに合わせて左端から右端まで動かす
 function movePitchCursor(duration){
-  if(!el.pitchCursor || !el.pitchTrail) return;
+  if(!el.pitchCursor || !el.pitchTrackColor) return;
   el.pitchCursor.style.transition = 'none';
-  el.pitchTrail.style.transition = 'none';
+  el.pitchTrackColor.style.transition = 'none';
   el.pitchCursor.style.left = '0%';
-  el.pitchTrail.style.width = '0%';
+  el.pitchTrackColor.style.clipPath = 'inset(0 100% 0 0)';
   void el.pitchCursor.offsetWidth; // 強制リフロー
   el.pitchCursor.style.transition = `left ${duration}s linear`;
-  el.pitchTrail.style.transition = `width ${duration}s linear`;
+  el.pitchTrackColor.style.transition = `clip-path ${duration}s linear`;
   el.pitchCursor.style.left = '100%';
-  el.pitchTrail.style.width = '100%';
+  el.pitchTrackColor.style.clipPath = 'inset(0 0% 0 0)';
 }
 
 // しゃくり・こぶし・フォール・ビブラートのカウンターを、行が変わるたびに演出としてランダムに増やす。

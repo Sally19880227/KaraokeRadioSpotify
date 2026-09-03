@@ -212,41 +212,34 @@ button{ font-family:inherit; cursor:pointer; }
   background: rgba(20,20,28,0.55); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   overflow:visible;
 }
-.pitch-track{
+.pitch-track-base, .pitch-track-color{
   position:absolute; inset:0; display:flex; align-items:flex-start; gap:2px; padding: 8px 10px; overflow:visible;
+}
+.pitch-track-color{
+  clip-path: inset(0 100% 0 0); /* 縦線が通り過ぎた分だけ、右側のクリップが減っていく */
 }
 .pitch-pill{
   height:14px; flex:1 1 auto; min-width:6px;
-  background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #f2a900);
-  border-top:1px solid rgba(255,255,255,0.8);
-  box-shadow: 0 0 6px rgba(255,209,102,0.6);
   position:relative;
   transition: margin-top .15s ease;
 }
-.pitch-pill.c-green{ background: linear-gradient(180deg, #ecffe0, #7be07b 55%, #2fae4f); box-shadow:0 0 6px rgba(140,255,140,.6); }
-.pitch-pill.c-pink{ background: linear-gradient(180deg, #ffe6f5, #ff8cd0 55%, #e0459c); box-shadow:0 0 6px rgba(255,140,200,.6); }
-.pitch-pill.c-blue{ background: linear-gradient(180deg, #e2f4ff, #6fc4ff 55%, #2a8fe0); box-shadow:0 0 6px rgba(140,190,255,.6); }
-.pitch-pill.is-gap{ background: transparent; box-shadow:none; border-top:none; }
+/* 未通過部分：うすい灰色のブロック */
+.pitch-track-base .pitch-pill{
+  background: #6b6f7c;
+  border-top:1px solid rgba(255,255,255,0.25);
+}
+.pitch-track-base .pitch-pill.is-gap{ background: transparent; border-top:none; }
 
-/* 通り過ぎた後に残る、虹色のキラキラの軌跡 */
-.pitch-trail{
-  position:absolute; top:0; bottom:0; left:0; width:0%;
-  background: linear-gradient(90deg,
-    rgba(255,94,108,.32), rgba(255,178,71,.32), rgba(255,224,102,.32), rgba(140,255,140,.32),
-    rgba(94,203,255,.32), rgba(140,157,255,.32), rgba(214,140,255,.32));
-  overflow:hidden; pointer-events:none; z-index:0;
+/* 通過済み部分：実際の色（ブロックのみに色がつき、帯全体には色をつけない） */
+.pitch-track-color .pitch-pill{
+  background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #f2a900);
+  border-top:1px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 6px rgba(255,209,102,0.6);
 }
-.pitch-trail::after{
-  content:''; position:absolute; inset:0;
-  background-image:
-    radial-gradient(circle, #fff 1.2px, transparent 1.6px),
-    radial-gradient(circle, #fff 1px, transparent 1.4px);
-  background-size: 22px 22px, 14px 14px;
-  background-position: 0 0, 10px 8px;
-  opacity:.5;
-  animation: trailTwinkle 1s steps(2) infinite;
-}
-@keyframes trailTwinkle{ 0%,100%{ opacity:.2; } 50%{ opacity:.65; } }
+.pitch-track-color .pitch-pill.c-green{ background: linear-gradient(180deg, #ecffe0, #7be07b 55%, #2fae4f); box-shadow:0 0 6px rgba(140,255,140,.6); }
+.pitch-track-color .pitch-pill.c-pink{ background: linear-gradient(180deg, #ffe6f5, #ff8cd0 55%, #e0459c); box-shadow:0 0 6px rgba(255,140,200,.6); }
+.pitch-track-color .pitch-pill.c-blue{ background: linear-gradient(180deg, #e2f4ff, #6fc4ff 55%, #2a8fe0); box-shadow:0 0 6px rgba(140,190,255,.6); }
+.pitch-track-color .pitch-pill.is-gap{ background: transparent; box-shadow:none; border-top:none; }
 
 .pitch-cursor{
   position:absolute; top:0; bottom:0; left:0;
