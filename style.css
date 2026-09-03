@@ -181,8 +181,10 @@ button{ font-family:inherit; cursor:pointer; }
   text-align:center; padding: 24px 20px; position:relative; z-index:1;
 }
 .karaoke-status{ font-size:13.5px; color: var(--text-dim); margin-bottom:18px; }
+.karaoke-tap-hint{ font-size:12px; color: var(--text-dim); margin-top:22px; opacity:.75; }
+
 .karaoke-lines{
-  width:100%; max-width: 96vw; display:flex; flex-direction:column; align-items:center; gap: 4vh;
+  width:100%; max-width: 96vw; display:flex; flex-direction:column; align-items:center; gap: 2.6vh;
   position:relative;
 }
 .karaoke-lines::before{
@@ -191,9 +193,21 @@ button{ font-family:inherit; cursor:pointer; }
   background: radial-gradient(ellipse at center, var(--accent-glow), transparent 70%);
   filter: blur(10px); opacity:.5; z-index:-1; pointer-events:none;
 }
-.karaoke-current-line{
-  font-family:'Sora',sans-serif; font-weight:800; line-height:1.25;
-  font-size: clamp(32px, 8vw, 140px);
+
+.k-line{
+  font-family:'Sora',sans-serif; font-weight:700; line-height:1.35;
+  cursor:pointer; border-radius:10px; padding: 4px 14px;
+  transition: color .2s ease, background-color .2s ease;
+}
+.k-line:hover{ background: rgba(255,255,255,0.06); }
+.k-line.k-prev{ font-size: clamp(14px, 2.2vw, 24px); color: var(--text-dim); opacity:.55; }
+.k-line.k-next{ font-size: clamp(16px, 2.6vw, 30px); color: var(--text-dim); }
+.k-line.k-next::before{ content:'♪ '; opacity:.7; }
+.k-line.k-next2{ font-size: clamp(13px, 2vw, 20px); color: var(--text-dim); opacity:.4; }
+
+.k-line.k-current{
+  font-weight:800;
+  font-size: clamp(30px, 7.5vw, 130px);
   background-image: linear-gradient(90deg, var(--accent) 50%, rgba(255,255,255,0.22) 50%);
   background-size: 200% 100%;
   background-position: 100% 0;
@@ -207,12 +221,6 @@ button{ font-family:inherit; cursor:pointer; }
   from{ background-position: 100% 0; }
   to{ background-position: 0% 0; }
 }
-.karaoke-next-line{
-  font-family:'Sora',sans-serif; font-weight:600; line-height:1.4; color: var(--text-dim);
-  font-size: clamp(16px, 2.6vw, 30px);
-  transition: opacity .25s ease;
-}
-.karaoke-next-line::before{ content:'♪ '; opacity:.7; }
 
 .control-bar{
   display:flex; align-items:center; justify-content:center; gap:16px;
@@ -224,11 +232,6 @@ button{ font-family:inherit; cursor:pointer; }
   background: var(--accent); color:#0c0c10; font-size:19px;
 }
 .control-btn-secondary{ background: var(--surface); color: var(--text); border:1px solid var(--line); width:44px; height:44px; font-size:16px; }
-.sync-tap-btn{
-  height:44px; width:auto; border-radius:999px; padding:0 16px;
-  background: var(--surface); color: var(--text); border:1px solid var(--line); font-size:13px; font-weight:600;
-}
-.sync-tap-btn.armed{ border-color: var(--accent); color: var(--accent); }
 .now-playing-note{ font-size:12px; color: var(--text-dim); margin-left:6px; }
 
 /* ---------- Modal ---------- */
@@ -237,11 +240,18 @@ button{ font-family:inherit; cursor:pointer; }
   display:flex; align-items:center; justify-content:center; z-index: 200; padding:20px;
 }
 .modal-card{ background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:26px; width:100%; max-width:420px; }
+#lyrics-edit-modal .modal-card{ max-width:560px; }
 .modal-card h2{ font-family:'Sora'; font-size:18px; margin:0 0 12px; }
 .modal-desc{ font-size:13px; color: var(--text-dim); line-height:1.6; margin-bottom:16px; }
+.modal-desc code{ background: var(--bg); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:12px; }
 #api-key-input{
   width:100%; background: var(--bg); border:1px solid var(--line); color:var(--text);
   padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:16px; outline:none;
+}
+#manual-lrc-input{
+  width:100%; background: var(--bg); border:1px solid var(--line); color:var(--text);
+  padding:10px 12px; border-radius:8px; font-size:12.5px; font-family: monospace;
+  margin-bottom:16px; outline:none; resize:vertical;
 }
 .modal-actions{ display:flex; gap:10px; }
 .primary-btn{ background: var(--accent); color:#0c0c10; border:none; font-weight:700; padding:9px 18px; border-radius:10px; font-size:13px; }

@@ -21,7 +21,6 @@ const state = {
   karaokeSyncTimer: null,
   karaokeOffset: 0,
   karaokeRate: 1.0,
-  syncTapPoints: [],
 };
 
 const el = {
@@ -47,8 +46,7 @@ const el = {
   karaokeTitle: document.getElementById('karaoke-title'),
   karaokeArtist: document.getElementById('karaoke-artist'),
   karaokeStatus: document.getElementById('karaoke-status'),
-  karaokeCurrentLine: document.getElementById('karaoke-current-line'),
-  karaokeNextLine: document.getElementById('karaoke-next-line'),
+  karaokeLines: document.getElementById('karaoke-lines'),
   karaokeOffsetSlider: document.getElementById('karaoke-offset-slider'),
   karaokeRateSlider: document.getElementById('karaoke-rate-slider'),
   karaokeRateValue: document.getElementById('karaoke-rate-value'),
@@ -59,8 +57,12 @@ const el = {
 
   playPauseBtn: document.getElementById('play-pause-btn'),
   skipBtn: document.getElementById('skip-btn'),
-  syncTapBtn: document.getElementById('sync-tap-btn'),
   syncHint: document.getElementById('sync-hint'),
+  editLyricsBtn: document.getElementById('edit-lyrics-btn'),
+  lyricsEditModal: document.getElementById('lyrics-edit-modal'),
+  lyricsEditClose: document.getElementById('lyrics-edit-close'),
+  manualLrcInput: document.getElementById('manual-lrc-input'),
+  manualLrcApply: document.getElementById('manual-lrc-apply'),
 };
 
 // ---------- API key modal ----------
@@ -403,26 +405,30 @@ async function loadKaraokeLyrics(v){
   stopKaraokeSyncLoop();
   state.lyrics = [];
   state.karaokeActiveIndex = -1;
-  state.syncTapPoints = [];
-  el.syncTapBtn.classList.remove('armed');
+  state.currentVideoForLyrics = v;
   el.syncHint.textContent = '同じアーティストの曲を自動的に流し続けます';
-  el.karaokeCurrentLine.textContent = '';
-  el.karaokeNextLine.textContent = '';
+  el.karaokeLines.innerHTML = '';
   el.karaokeStatus.textContent = '歌詞を検索中…';
 
   const { artist, track } = guessTrackInfo(v);
   const lrc = await fetchLyricsFromLrclib(track, artist);
   if(!lrc){
-    el.karaokeStatus.textContent = `歌詞が見つかりませんでした（検索語: ${artist} / ${track}）`;
+    el.karaokeStatus.textContent = `歌詞が見つかりませんでした（検索語: ${artist} / ${track}）。「✎ 歌詞を編集」から手動で貼り付けることもできます。`;
     return;
   }
-  state.lyrics = parseLrc(lrc);
+  applyLyrics(parseLrc(lrc));
+}
+
+// 解析済みの歌詞データを反映し、必要なら同期ループを開始する
+function applyLyrics(lines){
+  state.lyrics = lines;
+  state.karaokeActiveIndex = -1;
   if(!state.lyrics.length){
     el.karaokeStatus.textContent = '歌詞データを解析できませんでした。';
     return;
   }
   el.karaokeStatus.textContent = '';
-  el.karaokeNextLine.textContent = state.lyrics[0].text;
+  renderKaraokeWindow(-1);
   if(state.player && state.player.getPlayerState && state.player.getPlayerState() === YT.PlayerState.PLAYING){
     startKaraokeSyncLoop();
   }
@@ -447,16 +453,58 @@ function karaokeTick(){
   }
   if(idx === state.karaokeActiveIndex) return;
   state.karaokeActiveIndex = idx;
-  el.karaokeCurrentLine.textContent = idx >= 0 ? state.lyrics[idx].text : '';
-  el.karaokeNextLine.textContent = (idx + 1 < state.lyrics.length) ? state.lyrics[idx + 1].text : '';
+  renderKaraokeWindow(idx);
+}
+
+// 前後数行をまとめて表示する（前1行・現在1行・次2行）。各行はタップで即座に同期し直せる
+function renderKaraokeWindow(idx){
+  el.karaokeLines.innerHTML = '';
+  const positions = [
+    { offset: -1, cls: 'k-prev' },
+    { offset: 0,  cls: 'k-current' },
+    { offset: 1,  cls: 'k-next' },
+    { offset: 2,  cls: 'k-next2' },
+  ];
+  positions.forEach(p => {
+    const i = idx + p.offset;
+    const line = state.lyrics[i];
+    const div = document.createElement('div');
+    div.className = `k-line ${p.cls}`;
+    div.textContent = line ? line.text : '\u00A0';
+    if(line){
+      div.addEventListener('click', () => resyncToLine(i));
+    }
+    el.karaokeLines.appendChild(div);
+  });
   applyKaraokeFillAnimation(idx);
+}
+
+// タップされた行が「今まさに歌われている」ことにして、ズレ調整(offset)をその場で計算し直す
+function resyncToLine(i){
+  if(!state.player || !state.player.getCurrentTime) return;
+  const line = state.lyrics[i];
+  if(!line) return;
+  const videoTime = state.player.getCurrentTime();
+  let offset = (videoTime * state.karaokeRate) - line.time;
+
+  const offsetMin = parseFloat(el.karaokeOffsetSlider.min);
+  const offsetMax = parseFloat(el.karaokeOffsetSlider.max);
+  offset = Math.min(offsetMax, Math.max(offsetMin, offset));
+
+  state.karaokeOffset = Math.round(offset * 10) / 10;
+  el.karaokeOffsetSlider.value = state.karaokeOffset;
+  updateKaraokeOffsetDisplay();
+
+  state.karaokeActiveIndex = i;
+  renderKaraokeWindow(i);
+  el.syncHint.textContent = `「${line.text}」に合わせました。`;
 }
 
 // 現在の行から次の行までの時間に合わせて、文字が色付いていくアニメーションの速さを設定する
 function applyKaraokeFillAnimation(idx){
-  const el2 = el.karaokeCurrentLine;
-  if(idx < 0){
-    el2.style.animation = 'none';
+  const currentEl = el.karaokeLines.querySelector('.k-current');
+  if(!currentEl || idx < 0){
+    if(currentEl) currentEl.style.animation = 'none';
     return;
   }
   const current = state.lyrics[idx];
@@ -464,11 +512,28 @@ function applyKaraokeFillAnimation(idx){
   let duration = next ? (next.time - current.time) / state.karaokeRate : 4;
   duration = Math.min(8, Math.max(1.2, duration));
 
-  el2.style.animation = 'none';
+  currentEl.style.animation = 'none';
   // 強制的にリフローさせてアニメーションを最初から再生させる
-  void el2.offsetWidth;
-  el2.style.animation = `karaokeFill ${duration}s linear forwards`;
+  void currentEl.offsetWidth;
+  currentEl.style.animation = `karaokeFill ${duration}s linear forwards`;
 }
+
+// ---------- 歌詞の手動編集 ----------
+el.editLyricsBtn.addEventListener('click', () => {
+  el.manualLrcInput.value = '';
+  el.lyricsEditModal.classList.remove('hidden');
+});
+el.lyricsEditClose.addEventListener('click', () => el.lyricsEditModal.classList.add('hidden'));
+el.manualLrcApply.addEventListener('click', () => {
+  const lines = parseLrc(el.manualLrcInput.value);
+  if(!lines.length){
+    alert('LRC形式を認識できませんでした。例: [00:12.50]歌詞の一行目');
+    return;
+  }
+  stopKaraokeSyncLoop();
+  applyLyrics(lines);
+  el.lyricsEditModal.classList.add('hidden');
+});
 
 // ---------- ズレ調整 ----------
 function updateKaraokeOffsetDisplay(){
@@ -486,52 +551,7 @@ el.karaokeRateSlider.addEventListener('input', updateKaraokeRateDisplay);
 el.karaokeRateSlider.addEventListener('change', updateKaraokeRateDisplay);
 
 // ---------- タップで同期（2点計測して自動計算） ----------
-el.syncTapBtn.addEventListener('click', handleSyncTap);
 
-function handleSyncTap(){
-  if(!state.player || !state.player.getCurrentTime || state.karaokeActiveIndex < 0){
-    el.syncHint.textContent = '歌詞が表示されてからタップしてください。';
-    return;
-  }
-  const lyricTime = state.lyrics[state.karaokeActiveIndex].time;
-  const videoTime = state.player.getCurrentTime();
-  state.syncTapPoints.push({ lyricTime, videoTime });
-
-  if(state.syncTapPoints.length === 1){
-    el.syncTapBtn.classList.add('armed');
-    el.syncHint.textContent = '1回目を記録しました。曲が進んでから、歌詞と実際の歌が合っている瞬間にもう一度タップしてください。';
-    return;
-  }
-
-  // 2点そろったので、ズレ調整（offset）と速度補正（rate）を自動計算する
-  const [p1, p2] = state.syncTapPoints.slice(-2);
-  if(Math.abs(p2.videoTime - p1.videoTime) < 3){
-    el.syncHint.textContent = '1回目と2回目の間隔が短すぎます。もっと曲が進んでから2回目をタップしてください。';
-    state.syncTapPoints = [p1];
-    return;
-  }
-
-  let rate = (p1.lyricTime - p2.lyricTime) / (p1.videoTime - p2.videoTime);
-  let offset = rate * p1.videoTime - p1.lyricTime;
-
-  const rateMin = parseFloat(el.karaokeRateSlider.min);
-  const rateMax = parseFloat(el.karaokeRateSlider.max);
-  const offsetMin = parseFloat(el.karaokeOffsetSlider.min);
-  const offsetMax = parseFloat(el.karaokeOffsetSlider.max);
-  rate = Math.min(rateMax, Math.max(rateMin, rate));
-  offset = Math.min(offsetMax, Math.max(offsetMin, offset));
-
-  state.karaokeRate = Math.round(rate * 1000) / 1000;
-  state.karaokeOffset = Math.round(offset * 10) / 10;
-  el.karaokeRateSlider.value = state.karaokeRate;
-  el.karaokeOffsetSlider.value = state.karaokeOffset;
-  updateKaraokeRateDisplay();
-  updateKaraokeOffsetDisplay();
-
-  state.syncTapPoints = [];
-  el.syncTapBtn.classList.remove('armed');
-  el.syncHint.textContent = `同期を自動調整しました（ズレ調整: ${state.karaokeOffset.toFixed(1)}秒 / 速度補正: ${Math.round(state.karaokeRate*100)}%）`;
-}
 function stepKaraokeOffset(delta){
   const min = parseFloat(el.karaokeOffsetSlider.min);
   const max = parseFloat(el.karaokeOffsetSlider.max);

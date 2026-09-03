@@ -60,21 +60,19 @@
         <input type="range" id="karaoke-rate-slider" min="0.90" max="1.10" value="1.00" step="0.005">
         <span id="karaoke-rate-value">100%</span>
       </div>
+      <button id="edit-lyrics-btn" class="karaoke-close-btn">✎ 歌詞を編集</button>
       <button id="back-to-search-btn" class="karaoke-close-btn">🔍 検索に戻る</button>
     </div>
 
     <div class="karaoke-body">
       <div id="karaoke-status" class="karaoke-status"></div>
-      <div class="karaoke-lines">
-        <div id="karaoke-current-line" class="karaoke-current-line">&nbsp;</div>
-        <div id="karaoke-next-line" class="karaoke-next-line">&nbsp;</div>
-      </div>
+      <div id="karaoke-lines" class="karaoke-lines"></div>
+      <p class="karaoke-tap-hint">ズレていたら、合っている行を <strong>タップ</strong> してください</p>
     </div>
 
     <div class="control-bar">
       <button id="play-pause-btn" class="control-btn" aria-label="再生/一時停止">⏸</button>
       <button id="skip-btn" class="control-btn control-btn-secondary" aria-label="次の曲へ">⏭</button>
-      <button id="sync-tap-btn" class="control-btn-secondary sync-tap-btn">🎯 今タップで同期</button>
       <div id="sync-hint" class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
     </div>
   </section>
@@ -93,6 +91,22 @@
     <div class="modal-actions">
       <button id="api-key-save" class="primary-btn">保存</button>
       <button id="api-key-cancel" class="ghost-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 歌詞手動編集モーダル -->
+<div id="lyrics-edit-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2>歌詞を編集</h2>
+    <p class="modal-desc">
+      自動検索された歌詞が違う曲だった場合や見つからなかった場合は、LRC形式の歌詞をここに直接貼り付けてください。<br>
+      形式の例: <code>[00:12.50]歌詞の一行目</code>
+    </p>
+    <textarea id="manual-lrc-input" rows="10" placeholder="[00:12.50]歌詞の一行目&#10;[00:16.20]歌詞の二行目 ..."></textarea>
+    <div class="modal-actions">
+      <button id="manual-lrc-apply" class="primary-btn">この歌詞を使う</button>
+      <button id="lyrics-edit-close" class="ghost-btn">閉じる</button>
     </div>
   </div>
 </div>
