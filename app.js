@@ -582,41 +582,67 @@ async function findLyricsWithFallback(v){
 function buildTitleCandidates(v){
   const rawTitle = decodeHTML(v.title);
   const channelArtist = decodeHTML(v.channel).replace(/\s*-\s*Topic$/i, '').trim();
+  const channelArtistSimplified = channelArtist
+    .replace(/(Official|オフィシャル|Music|チャンネル|Channel|TV|VEVO|Records?)\s*$/gi, '').trim();
   const variants = cleanTitleVariants(rawTitle);
-  const separators = [' - ', ' – ', ' — ', '「', '『', '｜', '/'];
+  const separators = [' - ', ' – ', ' — ', '「', '『', '｜', '/', ' : ', '：', '~', '〜', '×', '・', '|'];
 
   const candidates = [];
   const pushCandidate = (track, artist) => {
     track = (track || '').trim();
     artist = (artist || '').trim();
-    if(!track) return;
+    if(!track || track.length < 1) return;
     const key = `${artist}::${track}`.toLowerCase();
     if(candidates.some(c => c.key === key)) return;
     candidates.push({ key, track, artist, label: artist ? `${track} / ${artist}` : track });
   };
 
+  // ① 区切り文字ごとに分割し、通常パターン・逆パターン・末尾のみを候補にする
   variants.forEach(t => {
     let matchedSep = false;
     for(const sep of separators){
       if(t.includes(sep)){
-        const parts = t.split(sep);
+        const parts = t.split(sep).map(p => p.trim()).filter(Boolean);
         if(parts.length >= 2){
-          const left = parts[0].trim();
-          const right = parts.slice(1).join(sep).replace(/[」』]/g, '').trim();
-          pushCandidate(right, left);   // 想定どおり：アーティスト名 - 曲名
-          pushCandidate(left, right);   // 逆パターン：曲名 - アーティスト名
+          const left = parts[0];
+          const rest = parts.slice(1).join(' ').replace(/[」』]/g, '').trim();
+          pushCandidate(rest, left);              // 想定どおり：アーティスト名 - 曲名
+          pushCandidate(left, rest);              // 逆パターン：曲名 - アーティスト名
+          pushCandidate(parts[parts.length - 1], left); // 区切りが複数ある場合、末尾だけを曲名として試す
           matchedSep = true;
         }
       }
     }
     if(!matchedSep){
-      pushCandidate(t, channelArtist); // 区切りが無い場合はチャンネル名をアーティストとみなす
-      pushCandidate(t, '');            // アーティスト指定なしで曲名のみ検索
+      pushCandidate(t, channelArtist);
+      pushCandidate(t, channelArtistSimplified);
+      pushCandidate(t, '');
     }
   });
-  pushCandidate(rawTitle, channelArtist);
 
-  return candidates.slice(0, 6);
+  // ② 括弧の中身も、副題やアーティスト名の可能性があるため候補に加える
+  const bracketMatches = [...rawTitle.matchAll(/[\(（\[［]([^\)）\]］]+)[\)）\]］]/g)];
+  bracketMatches.forEach(m => {
+    const inner = m[1].trim();
+    if(inner.length >= 2 && inner.length <= 30 && !/official|video|mv|lyric|audio/i.test(inner)){
+      pushCandidate(inner, channelArtist);
+      pushCandidate(inner, '');
+    }
+  });
+
+  // ③ 区切りが無い場合、単語（スペース区切り）ごとに「前半をアーティスト・後半を曲名」と仮定して分解する
+  const baseWords = variants[variants.length - 1].split(/\s+/).filter(Boolean);
+  if(baseWords.length >= 2 && baseWords.length <= 8){
+    for(let i = 1; i < baseWords.length; i++){
+      pushCandidate(baseWords.slice(i).join(' '), baseWords.slice(0, i).join(' '));
+    }
+  }
+
+  // ④ 最後の保険：タイトルそのまま
+  pushCandidate(rawTitle, channelArtist);
+  pushCandidate(rawTitle, '');
+
+  return candidates.slice(0, 14);
 }
 
 // 候補チップを表示する
