@@ -848,7 +848,24 @@ function regeneratePitchTrack(bumpedKey){
   const gapCount = 2 + Math.floor(Math.random() * 2);
   for(let i = 0; i < gapCount; i++) gapPositions.add(2 + Math.floor(Math.random() * (pillCount - 4)));
 
-  const iconIndex = Math.floor(pillCount * (0.05 + Math.random() * 0.5));
+  // アイコン（しゃくり・こぶし・フォール・ビブラート）を、ところどころに複数配置する位置を決める
+  const techniqueKeys = Object.keys(TECHNIQUE_ICONS);
+  const iconPositions = new Map();
+  const iconCount = 2 + Math.floor(Math.random() * 3); // 2〜4個
+  for(let n = 0; n < iconCount; n++){
+    const idx = 2 + Math.floor(Math.random() * (pillCount - 4));
+    if(gapPositions.has(idx)) continue;
+    const key = (n === 0 && bumpedKey) ? bumpedKey : techniqueKeys[Math.floor(Math.random() * techniqueKeys.length)];
+    iconPositions.set(idx, key);
+  }
+
+  // レインボーのキラキラを付与する箇所を、ところどころに複数決める
+  const sparklePositions = new Set();
+  const sparkleCount = 3 + Math.floor(Math.random() * 4); // 3〜6箇所
+  for(let n = 0; n < sparkleCount; n++){
+    const idx = Math.floor(Math.random() * pillCount);
+    if(!gapPositions.has(idx)) sparklePositions.add(idx);
+  }
 
   // 階段状の高さレベルを作る：同じ高さがしばらく続き（直線区間）、時々上下にジャンプする
   const levelCount = 6;
@@ -883,14 +900,23 @@ function regeneratePitchTrack(bumpedKey){
     colorPill.style.flex = flex;
     colorPill.style.marginTop = marginTop;
 
-    if(bumpedKey && i === iconIndex){
+    // アイコンは「通過済み」を示すカラー側のブロックに付与し、縦線が通り過ぎたときだけ見えるようにする
+    if(iconPositions.has(i)){
       const icon = document.createElement('span');
-      const meta = TECHNIQUE_ICONS[bumpedKey];
+      const meta = TECHNIQUE_ICONS[iconPositions.get(i)];
       icon.className = 'pitch-icon';
       icon.textContent = meta.symbol;
       icon.style.color = meta.color;
       icon.style.left = '50%';
-      basePill.appendChild(icon);
+      colorPill.appendChild(icon);
+    }
+
+    // レインボーのキラキラも同様に、通過済みブロックにのみ付与する
+    if(!isGap && sparklePositions.has(i)){
+      const cluster = document.createElement('span');
+      cluster.className = 'pitch-sparkle-cluster';
+      cluster.innerHTML = '<i>✦</i><i>✧</i><i>✦</i>';
+      colorPill.appendChild(cluster);
     }
 
     el.pitchTrackBase.appendChild(basePill);

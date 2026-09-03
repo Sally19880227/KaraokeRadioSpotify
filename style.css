@@ -259,6 +259,24 @@ button{ font-family:inherit; cursor:pointer; }
   filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
 }
 
+/* 通過済みブロックに付与する、レインボーのキラキラ */
+.pitch-sparkle-cluster{
+  position:absolute; top:-16px; left:50%; transform: translateX(-50%);
+  width:44px; height:34px; pointer-events:none;
+}
+.pitch-sparkle-cluster i{
+  position:absolute; font-style:normal; font-size:11px; opacity:0;
+  text-shadow: 0 0 6px currentColor;
+  animation: pitchSparkleTwinkle 1.6s ease-in-out infinite;
+}
+.pitch-sparkle-cluster i:nth-child(1){ left:0;   top:6px;  color:#ff9f4d; animation-delay:0s; }
+.pitch-sparkle-cluster i:nth-child(2){ left:16px; top:-8px; color:#5ecbff; font-size:14px; animation-delay:.4s; }
+.pitch-sparkle-cluster i:nth-child(3){ left:30px; top:10px; color:#8cff8c; animation-delay:.8s; }
+@keyframes pitchSparkleTwinkle{
+  0%, 100%{ opacity:0; transform: scale(.5) rotate(0deg); }
+  50%{ opacity:1; transform: scale(1.15) rotate(90deg); }
+}
+
 
 .pitch-stats{
   display:flex; flex-wrap:wrap; align-items:center; gap:16px;
