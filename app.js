@@ -418,6 +418,25 @@ function karaokeTick(){
   state.karaokeActiveIndex = idx;
   el.karaokeCurrentLine.textContent = idx >= 0 ? state.lyrics[idx].text : '';
   el.karaokeNextLine.textContent = (idx + 1 < state.lyrics.length) ? state.lyrics[idx + 1].text : '';
+  applyKaraokeFillAnimation(idx);
+}
+
+// 現在の行から次の行までの時間に合わせて、文字が色付いていくアニメーションの速さを設定する
+function applyKaraokeFillAnimation(idx){
+  const el2 = el.karaokeCurrentLine;
+  if(idx < 0){
+    el2.style.animation = 'none';
+    return;
+  }
+  const current = state.lyrics[idx];
+  const next = state.lyrics[idx + 1];
+  let duration = next ? (next.time - current.time) : 4;
+  duration = Math.min(8, Math.max(1.2, duration));
+
+  el2.style.animation = 'none';
+  // 強制的にリフローさせてアニメーションを最初から再生させる
+  void el2.offsetWidth;
+  el2.style.animation = `karaokeFill ${duration}s linear forwards`;
 }
 
 // ---------- ズレ調整 ----------

@@ -110,12 +110,46 @@ button{ font-family:inherit; cursor:pointer; }
 /* ---------- カラオケビュー ---------- */
 .karaoke-view{
   position:fixed; inset:0; z-index: 100;
-  background: #0a0a0e;
+  background:
+    radial-gradient(ellipse 60% 45% at 15% 10%, rgba(255,80,140,0.22), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 15%, rgba(90,140,255,0.22), transparent 60%),
+    radial-gradient(ellipse 70% 55% at 50% 100%, rgba(255,209,102,0.14), transparent 65%),
+    #0a0a0e;
+  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: stageDrift 18s ease-in-out infinite;
   display:flex; flex-direction:column;
+  overflow:hidden;
 }
+@keyframes stageDrift{
+  0%,100%{ background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  50%{ background-position: 20% 20%, 80% 30%, 40% 90%, 0 0; }
+}
+
+.karaoke-notes{
+  position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0;
+}
+.karaoke-notes span{
+  position:absolute; bottom:-40px; font-size:22px; opacity:0;
+  color: var(--accent); text-shadow: 0 0 12px var(--accent-glow);
+  animation: noteFloat 9s ease-in infinite;
+}
+.karaoke-notes span:nth-child(1){ left:6%;  animation-delay:0s;   font-size:26px; }
+.karaoke-notes span:nth-child(2){ left:18%; animation-delay:1.8s; font-size:18px; }
+.karaoke-notes span:nth-child(3){ left:32%; animation-delay:3.6s; font-size:24px; }
+.karaoke-notes span:nth-child(4){ left:68%; animation-delay:1.2s; font-size:20px; }
+.karaoke-notes span:nth-child(5){ left:82%; animation-delay:4.4s; font-size:28px; }
+.karaoke-notes span:nth-child(6){ left:92%; animation-delay:2.6s; font-size:16px; }
+@keyframes noteFloat{
+  0%{ transform: translateY(0) rotate(0deg); opacity:0; }
+  12%{ opacity:.55; }
+  85%{ opacity:.4; }
+  100%{ transform: translateY(-100vh) rotate(25deg); opacity:0; }
+}
+
 .karaoke-topbar{
   display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
   padding: 16px 20px; border-bottom:1px solid var(--line); flex-shrink:0;
+  position:relative; z-index:2; background: rgba(10,10,14,0.35); backdrop-filter: blur(6px);
 }
 .karaoke-meta{ min-width:0; }
 .karaoke-title{
@@ -142,25 +176,46 @@ button{ font-family:inherit; cursor:pointer; }
 
 .karaoke-body{
   flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center; padding: 24px 20px;
+  text-align:center; padding: 24px 20px; position:relative; z-index:1;
 }
 .karaoke-status{ font-size:13.5px; color: var(--text-dim); margin-bottom:18px; }
-.karaoke-lines{ width:100%; max-width: 96vw; display:flex; flex-direction:column; align-items:center; gap: 4vh; }
+.karaoke-lines{
+  width:100%; max-width: 96vw; display:flex; flex-direction:column; align-items:center; gap: 4vh;
+  position:relative;
+}
+.karaoke-lines::before{
+  content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(90vw, 900px); height:min(60vh, 420px);
+  background: radial-gradient(ellipse at center, var(--accent-glow), transparent 70%);
+  filter: blur(10px); opacity:.5; z-index:-1; pointer-events:none;
+}
 .karaoke-current-line{
-  font-family:'Sora',sans-serif; font-weight:800; line-height:1.25; color: var(--accent);
+  font-family:'Sora',sans-serif; font-weight:800; line-height:1.25;
   font-size: clamp(32px, 8vw, 140px);
-  text-shadow: 0 0 36px var(--accent-glow);
-  transition: opacity .25s ease;
+  background-image: linear-gradient(90deg, var(--accent) 50%, rgba(255,255,255,0.22) 50%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 28px var(--accent-glow));
+  animation-name: karaokeFill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes karaokeFill{
+  from{ background-position: 100% 0; }
+  to{ background-position: 0% 0; }
 }
 .karaoke-next-line{
   font-family:'Sora',sans-serif; font-weight:600; line-height:1.4; color: var(--text-dim);
   font-size: clamp(16px, 2.6vw, 30px);
   transition: opacity .25s ease;
 }
+.karaoke-next-line::before{ content:'♪ '; opacity:.7; }
 
 .control-bar{
   display:flex; align-items:center; justify-content:center; gap:16px;
   padding: 16px 20px; border-top:1px solid var(--line); flex-shrink:0;
+  position:relative; z-index:2; background: rgba(10,10,14,0.35); backdrop-filter: blur(6px);
 }
 .control-btn{
   width:52px; height:52px; border-radius:50%; border:none;
