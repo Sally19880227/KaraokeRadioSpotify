@@ -8,6 +8,8 @@ const SEARCH_HISTORY_MAX = 12;
 const state = {
   apiKeys: [],           // 登録済みAPIキーの配列
   exhaustedKeys: {},     // { キー: '本日の日付文字列' } クォータ切れになったキーとその日付
+  keyUsageCount: {},     // { キー: 回数 } このアプリが本日そのキーで呼び出した回数（Google側の正確な使用率とは異なる目安）
+  activeKeyForDisplay: '',
   query: '',
   nextPageToken: null,
   currentList: [],
@@ -131,6 +133,26 @@ function markKeyExhausted(key){
   renderApiKeyList();
 }
 
+const API_KEYS_USAGE_KEY = 'kr_api_keys_usage';
+
+function loadKeyUsageCount(){
+  try{
+    const stored = JSON.parse(localStorage.getItem(API_KEYS_USAGE_KEY) || '{}');
+    // 日付が変わっていたらカウントをリセットする
+    if(stored.date !== todayString()) return {};
+    return stored.counts || {};
+  } catch(e){
+    return {};
+  }
+}
+function saveKeyUsageCount(){
+  localStorage.setItem(API_KEYS_USAGE_KEY, JSON.stringify({ date: todayString(), counts: state.keyUsageCount }));
+}
+function bumpKeyUsageCount(key){
+  state.keyUsageCount[key] = (state.keyUsageCount[key] || 0) + 1;
+  saveKeyUsageCount();
+}
+
 // 現在使える（本日クォータ切れになっていない）APIキーを1つ返す
 function getActiveApiKey(){
   return state.apiKeys.find(k => state.exhaustedKeys[k] !== todayString()) || null;
@@ -150,12 +172,20 @@ function renderApiKeyList(){
     el.apiKeyList.appendChild(empty);
     return;
   }
+  const activeKey = getActiveApiKey();
   state.apiKeys.forEach(key => {
     const item = document.createElement('div');
     item.className = 'api-key-item';
     const isExhausted = state.exhaustedKeys[key] === todayString();
+    const isActive = key === activeKey;
+    const usageCount = state.keyUsageCount[key] || 0;
+    if(isActive) item.classList.add('is-active-key');
     item.innerHTML = `
-      <span class="api-key-item-text">${maskApiKey(key)}</span>
+      <span class="api-key-item-text">
+        ${maskApiKey(key)}
+        ${isActive ? '<span class="api-key-active-badge">使用中</span>' : ''}
+      </span>
+      <span class="api-key-item-usage">本日 ${usageCount}回</span>
       <span class="api-key-item-status ${isExhausted ? 'exhausted' : 'ok'}">${isExhausted ? '本日利用不可' : '利用可能'}</span>
       <button class="api-key-item-remove" aria-label="削除">✕</button>
     `;
@@ -362,6 +392,7 @@ async function ytFetch(path, params, attempt = 0){
     openSettings();
     return null;
   }
+  bumpKeyUsageCount(activeKey);
   const url = new URL(`${API_BASE}/${path}`);
   Object.entries({ key: activeKey, ...params }).forEach(([k,v]) => {
     if(v === undefined || v === null) return;
@@ -1358,6 +1389,7 @@ el.manualLrcApply.addEventListener('click', () => {
 // ---------- Init ----------
 state.apiKeys = loadApiKeys();
 state.exhaustedKeys = loadExhaustedKeys();
+state.keyUsageCount = loadKeyUsageCount();
 if(state.apiKeys.length && !localStorage.getItem(API_KEYS_STORAGE_KEY)){
   saveApiKeys(); // 旧バージョンからの引き継ぎ分を保存しておく
 }
