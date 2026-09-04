@@ -46,6 +46,7 @@ const el = {
   syncExportBtn: document.getElementById('sync-export-btn'),
   syncImportBtn: document.getElementById('sync-import-btn'),
   syncStatus: document.getElementById('sync-status'),
+  bgBrightnessSlider: document.getElementById('bg-brightness-slider'),
 
   searchHistory: document.getElementById('search-history'),
   searchHistoryChips: document.getElementById('search-history-chips'),
@@ -1385,6 +1386,24 @@ el.manualLrcApply.addEventListener('click', () => {
 });
 
 // ---------- タップで同期（クリックした行に合わせてズレ・速度を内部的に調整） ----------
+
+// ---------- 背景の明るさ ----------
+const BG_BRIGHTNESS_KEY = 'kr_bg_brightness';
+function applyBgBrightness(value){
+  document.documentElement.style.setProperty('--bg-brightness', value);
+}
+function loadBgBrightness(){
+  const stored = parseFloat(localStorage.getItem(BG_BRIGHTNESS_KEY));
+  return isFinite(stored) ? stored : 0.75;
+}
+const initialBrightness = loadBgBrightness();
+el.bgBrightnessSlider.value = initialBrightness;
+applyBgBrightness(initialBrightness);
+el.bgBrightnessSlider.addEventListener('input', () => {
+  const value = parseFloat(el.bgBrightnessSlider.value);
+  applyBgBrightness(value);
+  localStorage.setItem(BG_BRIGHTNESS_KEY, value);
+});
 
 // ---------- Init ----------
 state.apiKeys = loadApiKeys();
