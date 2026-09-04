@@ -58,6 +58,11 @@
       <div class="control-bar">
         <button id="play-pause-btn" class="control-btn" aria-label="再生/一時停止">⏸</button>
         <button id="skip-btn" class="control-btn control-btn-secondary" aria-label="次の曲へ">⏭</button>
+        <div class="seek-wrap">
+          <span id="time-current">0:00</span>
+          <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.5">
+          <span id="time-total">0:00</span>
+        </div>
         <div id="sync-hint" class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
       </div>
       <button id="edit-lyrics-btn" class="karaoke-close-btn">✎ 歌詞を編集</button>
@@ -100,10 +105,17 @@
 <div id="settings-modal" class="modal hidden">
   <div class="modal-card">
     <h2>設定</h2>
-    <p class="modal-desc">YouTube Data API v3 のAPIキーを入力してください。キーはこの端末のブラウザにのみ保存され、外部には送信されません。</p>
-    <input id="api-key-input" type="text" placeholder="APIキーを入力">
+    <p class="modal-desc">
+      YouTube Data API v3 のAPIキーを登録してください。複数登録しておくと、
+      1つのキーが1日の利用上限に達した場合に自動的に次のキーへ切り替わります。
+      キーはこの端末のブラウザにのみ保存され、外部には送信されません。
+    </p>
+    <div id="api-key-list" class="api-key-list"></div>
+    <div class="api-key-add-row">
+      <input id="api-key-input" type="text" placeholder="新しいAPIキーを追加">
+      <button id="api-key-add-btn" class="primary-btn">追加</button>
+    </div>
     <div class="modal-actions">
-      <button id="api-key-save" class="primary-btn">保存</button>
       <button id="api-key-cancel" class="ghost-btn">閉じる</button>
     </div>
   </div>

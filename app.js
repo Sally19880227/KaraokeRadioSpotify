@@ -6,7 +6,8 @@ const SEARCH_HISTORY_KEY = 'kr_search_history';
 const SEARCH_HISTORY_MAX = 12;
 
 const state = {
-  apiKey: localStorage.getItem('kr_api_key') || '',
+  apiKeys: [],           // 登録済みAPIキーの配列
+  exhaustedKeys: {},     // { キー: '本日の日付文字列' } クォータ切れになったキーとその日付
   query: '',
   nextPageToken: null,
   currentList: [],
@@ -26,6 +27,8 @@ const state = {
   bgActiveLayer: 'a',
   pitchStats: { shakuri: 0, kobushi: 0, fall: 0, vibrato: 0 },
   currentSegment: -1,
+  seekBarTimer: null,
+  isSeeking: false,
 };
 
 const el = {
@@ -34,8 +37,9 @@ const el = {
   settingsBtn: document.getElementById('settings-btn'),
   settingsModal: document.getElementById('settings-modal'),
   apiKeyInput: document.getElementById('api-key-input'),
-  apiKeySave: document.getElementById('api-key-save'),
+  apiKeyAddBtn: document.getElementById('api-key-add-btn'),
   apiKeyCancel: document.getElementById('api-key-cancel'),
+  apiKeyList: document.getElementById('api-key-list'),
 
   searchHistory: document.getElementById('search-history'),
   searchHistoryChips: document.getElementById('search-history-chips'),
@@ -67,6 +71,9 @@ const el = {
 
   playPauseBtn: document.getElementById('play-pause-btn'),
   skipBtn: document.getElementById('skip-btn'),
+  seekSlider: document.getElementById('seek-slider'),
+  timeCurrent: document.getElementById('time-current'),
+  timeTotal: document.getElementById('time-total'),
   syncHint: document.getElementById('sync-hint'),
   editLyricsBtn: document.getElementById('edit-lyrics-btn'),
   lyricsEditModal: document.getElementById('lyrics-edit-modal'),
@@ -75,22 +82,106 @@ const el = {
   manualLrcApply: document.getElementById('manual-lrc-apply'),
 };
 
-// ---------- API key modal ----------
+// ---------- API key modal（複数キー対応） ----------
+const API_KEYS_STORAGE_KEY = 'kr_api_keys';
+const API_KEYS_EXHAUSTED_KEY = 'kr_api_keys_exhausted';
+
+function todayString(){
+  return new Date().toISOString().slice(0, 10);
+}
+
+function loadApiKeys(){
+  try{
+    const stored = JSON.parse(localStorage.getItem(API_KEYS_STORAGE_KEY) || '[]');
+    if(stored.length) return stored;
+  } catch(e){ /* ignore */ }
+  // 旧バージョン（単一キー保存）からの引き継ぎ
+  const legacy = localStorage.getItem('kr_api_key');
+  return legacy ? [legacy] : [];
+}
+
+function saveApiKeys(){
+  localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(state.apiKeys));
+}
+
+function loadExhaustedKeys(){
+  try{
+    const stored = JSON.parse(localStorage.getItem(API_KEYS_EXHAUSTED_KEY) || '{}');
+    const today = todayString();
+    // 日付が変わっていたら、クォータ切れ状態はリセットする
+    const fresh = {};
+    Object.entries(stored).forEach(([key, date]) => { if(date === today) fresh[key] = date; });
+    return fresh;
+  } catch(e){
+    return {};
+  }
+}
+
+function saveExhaustedKeys(){
+  localStorage.setItem(API_KEYS_EXHAUSTED_KEY, JSON.stringify(state.exhaustedKeys));
+}
+
+function markKeyExhausted(key){
+  state.exhaustedKeys[key] = todayString();
+  saveExhaustedKeys();
+  renderApiKeyList();
+}
+
+// 現在使える（本日クォータ切れになっていない）APIキーを1つ返す
+function getActiveApiKey(){
+  return state.apiKeys.find(k => state.exhaustedKeys[k] !== todayString()) || null;
+}
+
+function maskApiKey(key){
+  if(key.length <= 10) return key;
+  return `${key.slice(0, 6)}••••${key.slice(-4)}`;
+}
+
+function renderApiKeyList(){
+  el.apiKeyList.innerHTML = '';
+  if(!state.apiKeys.length){
+    const empty = document.createElement('p');
+    empty.className = 'api-key-empty';
+    empty.textContent = 'まだAPIキーが登録されていません。下から追加してください。';
+    el.apiKeyList.appendChild(empty);
+    return;
+  }
+  state.apiKeys.forEach(key => {
+    const item = document.createElement('div');
+    item.className = 'api-key-item';
+    const isExhausted = state.exhaustedKeys[key] === todayString();
+    item.innerHTML = `
+      <span class="api-key-item-text">${maskApiKey(key)}</span>
+      <span class="api-key-item-status ${isExhausted ? 'exhausted' : 'ok'}">${isExhausted ? '本日利用不可' : '利用可能'}</span>
+      <button class="api-key-item-remove" aria-label="削除">✕</button>
+    `;
+    item.querySelector('.api-key-item-remove').addEventListener('click', () => {
+      state.apiKeys = state.apiKeys.filter(k => k !== key);
+      saveApiKeys();
+      renderApiKeyList();
+    });
+    el.apiKeyList.appendChild(item);
+  });
+}
+
 function openSettings(){
-  el.apiKeyInput.value = state.apiKey;
+  el.apiKeyInput.value = '';
+  renderApiKeyList();
   el.settingsModal.classList.remove('hidden');
 }
 function closeSettings(){ el.settingsModal.classList.add('hidden'); }
 el.settingsBtn.addEventListener('click', openSettings);
 el.apiKeyCancel.addEventListener('click', closeSettings);
-el.apiKeySave.addEventListener('click', () => {
+el.apiKeyAddBtn.addEventListener('click', () => {
   const key = el.apiKeyInput.value.trim();
-  if(key){
-    state.apiKey = key;
-    localStorage.setItem('kr_api_key', key);
+  if(!key) return;
+  if(!state.apiKeys.includes(key)){
+    state.apiKeys.push(key);
+    saveApiKeys();
   }
-  closeSettings();
-  if(state.apiKey && el.historyThumbGrid && !el.historyThumbGrid.children.length){
+  el.apiKeyInput.value = '';
+  renderApiKeyList();
+  if(el.historyThumbGrid && !el.historyThumbGrid.children.length){
     renderHistoryThumbnailGrid();
   }
 });
@@ -146,14 +237,17 @@ el.searchForm.addEventListener('submit', (e) => {
   loadSearchResults(true);
 });
 
-async function ytFetch(path, params){
-  if(!state.apiKey){
-    showStatus('APIキーが未設定です。右上の ⚙ から設定してください。');
+async function ytFetch(path, params, attempt = 0){
+  const activeKey = getActiveApiKey();
+  if(!activeKey){
+    showStatus(state.apiKeys.length
+      ? '登録済みのAPIキーがすべて本日の利用上限に達しました。⚙から新しいキーを追加してください。'
+      : 'APIキーが未設定です。右上の ⚙ から設定してください。');
     openSettings();
     return null;
   }
   const url = new URL(`${API_BASE}/${path}`);
-  Object.entries({ key: state.apiKey, ...params }).forEach(([k,v]) => {
+  Object.entries({ key: activeKey, ...params }).forEach(([k,v]) => {
     if(v === undefined || v === null) return;
     url.searchParams.set(k, v);
   });
@@ -161,6 +255,12 @@ async function ytFetch(path, params){
     const res = await fetch(url);
     const data = await res.json();
     if(data.error){
+      const reason = data.error.errors && data.error.errors[0] && data.error.errors[0].reason;
+      const isQuotaError = reason === 'quotaExceeded' || reason === 'dailyLimitExceeded' || data.error.code === 403;
+      if(isQuotaError && attempt < state.apiKeys.length){
+        markKeyExhausted(activeKey);
+        return ytFetch(path, params, attempt + 1); // 次のキーで自動的に再試行する
+      }
       showStatus(`APIエラー: ${data.error.message}`);
       return null;
     }
@@ -252,7 +352,7 @@ function buildThumbTile(v){
 // 初期画面に、過去の検索履歴からランダムに選んだ曲のサムネイルを敷き詰めて表示する
 async function renderHistoryThumbnailGrid(){
   const history = getSearchHistory();
-  if(!history.length || !state.apiKey) return;
+  if(!history.length || !getActiveApiKey()) return;
 
   el.historyThumbSection.classList.remove('hidden');
   el.resultsHeading.classList.add('hidden');
@@ -287,6 +387,7 @@ function showResultsView(){
   el.resultsView.classList.remove('hidden');
   if(state.player && state.player.stopVideo) state.player.stopVideo();
   stopKaraokeSyncLoop();
+  stopSeekBarLoop();
   stopBackgroundSlideshow();
 }
 function showKaraokeView(){
@@ -385,15 +486,54 @@ function onPlayerStateChange(e){
   if(e.data === YT.PlayerState.PLAYING){
     el.playPauseBtn.textContent = '⏸';
     startKaraokeSyncLoop();
+    startSeekBarLoop();
   } else if(e.data === YT.PlayerState.PAUSED){
     el.playPauseBtn.textContent = '▶';
     stopKaraokeSyncLoop();
+    stopSeekBarLoop();
   } else if(e.data === YT.PlayerState.ENDED){
     el.playPauseBtn.textContent = '▶';
     stopKaraokeSyncLoop();
+    stopSeekBarLoop();
     playNextByArtist();
   }
 }
+
+// ---------- シークバー（歌詞の有無に関わらず、再生位置を変更できるようにする） ----------
+function formatTime(sec){
+  if(!isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+function startSeekBarLoop(){
+  stopSeekBarLoop();
+  state.seekBarTimer = setInterval(updateSeekBar, 250);
+  updateSeekBar();
+}
+function stopSeekBarLoop(){
+  if(state.seekBarTimer) clearInterval(state.seekBarTimer);
+  state.seekBarTimer = null;
+}
+function updateSeekBar(){
+  if(!state.player || !state.player.getCurrentTime || state.isSeeking) return;
+  const duration = state.player.getDuration ? state.player.getDuration() : 0;
+  const current = state.player.getCurrentTime();
+  if(duration > 0) el.seekSlider.max = duration;
+  el.seekSlider.value = current;
+  el.timeCurrent.textContent = formatTime(current);
+  el.timeTotal.textContent = formatTime(duration);
+}
+el.seekSlider.addEventListener('input', () => {
+  state.isSeeking = true;
+  el.timeCurrent.textContent = formatTime(parseFloat(el.seekSlider.value));
+});
+el.seekSlider.addEventListener('change', () => {
+  if(state.player && state.player.seekTo){
+    state.player.seekTo(parseFloat(el.seekSlider.value), true);
+  }
+  state.isSeeking = false;
+});
 
 el.playPauseBtn.addEventListener('click', () => {
   if(!state.player) return;
@@ -419,6 +559,9 @@ function playTrack(v, indexHint){
   el.karaokeArtist.textContent = decodeHTML(v.channel);
   state.currentIndex = (typeof indexHint === 'number') ? indexHint : state.currentList.findIndex(x => x.id === v.id);
   state.recentlyPlayedIds = [v.id, ...state.recentlyPlayedIds.filter(id => id !== v.id)].slice(0, 8);
+  el.seekSlider.value = 0;
+  el.timeCurrent.textContent = '0:00';
+  el.timeTotal.textContent = '0:00';
 
   if(state.playerReady && state.player && state.player.loadVideoById){
     state.player.loadVideoById(v.id);
@@ -1093,9 +1236,17 @@ el.manualLrcApply.addEventListener('click', () => {
 // ---------- タップで同期（クリックした行に合わせてズレ・速度を内部的に調整） ----------
 
 // ---------- Init ----------
+state.apiKeys = loadApiKeys();
+state.exhaustedKeys = loadExhaustedKeys();
+if(state.apiKeys.length && !localStorage.getItem(API_KEYS_STORAGE_KEY)){
+  saveApiKeys(); // 旧バージョンからの引き継ぎ分を保存しておく
+}
+
 renderSearchHistory();
-if(!state.apiKey){
-  showStatus('はじめに右上の ⚙ からYouTube Data APIキーを設定してください。');
+if(!getActiveApiKey()){
+  showStatus(state.apiKeys.length
+    ? '登録済みのAPIキーがすべて本日の利用上限に達しました。⚙から新しいキーを追加してください。'
+    : 'はじめに右上の ⚙ からYouTube Data APIキーを設定してください。');
   openSettings();
 } else {
   renderHistoryThumbnailGrid();
