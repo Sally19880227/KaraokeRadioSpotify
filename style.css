@@ -398,8 +398,12 @@ button{ font-family:inherit; cursor:pointer; }
 .modal{
   position:fixed; inset:0; background: rgba(6,6,9,0.75);
   display:flex; align-items:center; justify-content:center; z-index: 200; padding:20px;
+  overflow-y:auto;
 }
-.modal-card{ background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:26px; width:100%; max-width:420px; }
+.modal-card{
+  background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:26px;
+  width:100%; max-width:420px; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
 #lyrics-edit-modal .modal-card{ max-width:560px; }
 .modal-card h2{ font-family:'Sora'; font-size:18px; margin:0 0 12px; }
 .modal-desc{ font-size:13px; color: var(--text-dim); line-height:1.6; margin-bottom:16px; }
