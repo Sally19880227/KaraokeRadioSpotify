@@ -41,6 +41,7 @@ const el = {
   apiKeyInput: document.getElementById('api-key-input'),
   apiKeyAddBtn: document.getElementById('api-key-add-btn'),
   apiKeyCancel: document.getElementById('api-key-cancel'),
+  settingsCloseX: document.getElementById('settings-close-x'),
   apiKeyList: document.getElementById('api-key-list'),
   syncPasswordInput: document.getElementById('sync-password-input'),
   syncExportBtn: document.getElementById('sync-export-btn'),
@@ -207,6 +208,13 @@ function openSettings(){
 function closeSettings(){ el.settingsModal.classList.add('hidden'); }
 el.settingsBtn.addEventListener('click', openSettings);
 el.apiKeyCancel.addEventListener('click', closeSettings);
+el.settingsCloseX.addEventListener('click', closeSettings);
+el.settingsModal.addEventListener('click', (e) => {
+  if(e.target === el.settingsModal) closeSettings(); // 背景部分をタップしたら閉じる
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && !el.settingsModal.classList.contains('hidden')) closeSettings();
+});
 el.apiKeyAddBtn.addEventListener('click', () => {
   const key = el.apiKeyInput.value.trim();
   if(!key) return;
