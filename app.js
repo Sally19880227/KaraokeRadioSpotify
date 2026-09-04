@@ -603,6 +603,17 @@ function buildTitleCandidates(v){
           pushCandidate(rest, left);              // 想定どおり：アーティスト名 - 曲名
           pushCandidate(left, rest);              // 逆パターン：曲名 - アーティスト名
           pushCandidate(parts[parts.length - 1], left); // 区切りが複数ある場合、末尾だけを曲名として試す
+          pushCandidate(left, '');                // 曲名のみ（区切りの前半をタイトルとみなす）
+
+          // 「A covered by B」「A cover by B」のようなカバー表記を検出し、
+          // 曲名（left）に対して、原曲アーティスト・カバーしたアーティストの両方を候補にする
+          const coverMatch = rest.match(/^(.+?)\s*(?:covered\s*by|cover\s*by|cover\s*:)\s*(.+)$/i);
+          if(coverMatch){
+            const originalArtist = coverMatch[1].trim();
+            const coverArtist = coverMatch[2].trim();
+            pushCandidate(left, originalArtist); // 原曲のアーティスト名で検索
+            pushCandidate(left, coverArtist);    // カバーしたアーティスト名で検索
+          }
           matchedSep = true;
         }
       }
