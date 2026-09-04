@@ -40,6 +40,10 @@ const el = {
   apiKeyAddBtn: document.getElementById('api-key-add-btn'),
   apiKeyCancel: document.getElementById('api-key-cancel'),
   apiKeyList: document.getElementById('api-key-list'),
+  syncPasswordInput: document.getElementById('sync-password-input'),
+  syncExportBtn: document.getElementById('sync-export-btn'),
+  syncImportBtn: document.getElementById('sync-import-btn'),
+  syncStatus: document.getElementById('sync-status'),
 
   searchHistory: document.getElementById('search-history'),
   searchHistoryChips: document.getElementById('search-history-chips'),
@@ -183,6 +187,110 @@ el.apiKeyAddBtn.addEventListener('click', () => {
   renderApiKeyList();
   if(el.historyThumbGrid && !el.historyThumbGrid.children.length){
     renderHistoryThumbnailGrid();
+  }
+});
+
+// ---------- 他の端末との共有（パスワードで暗号化したファイルをGitHub経由でやり取りする） ----------
+const SYNC_FILE_NAME = 'keys.enc.json';
+
+function bufToBase64(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+function base64ToBuf(b64){
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
+}
+
+async function deriveKeyFromPassword(password, saltBytes){
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: saltBytes, iterations: 150000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptApiKeys(password){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKeyFromPassword(password, salt);
+  const plaintext = new TextEncoder().encode(JSON.stringify(state.apiKeys));
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
+  return `${bufToBase64(salt)}.${bufToBase64(iv)}.${bufToBase64(ciphertext)}`;
+}
+
+async function decryptApiKeys(password, payload){
+  const [saltB64, ivB64, cipherB64] = payload.split('.');
+  const salt = new Uint8Array(base64ToBuf(saltB64));
+  const iv = new Uint8Array(base64ToBuf(ivB64));
+  const ciphertext = base64ToBuf(cipherB64);
+  const key = await deriveKeyFromPassword(password, salt);
+  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return JSON.parse(new TextDecoder().decode(plainBuf));
+}
+
+el.syncExportBtn.addEventListener('click', async () => {
+  const password = el.syncPasswordInput.value;
+  if(!password){
+    el.syncStatus.textContent = 'パスワードを入力してください。';
+    return;
+  }
+  if(!state.apiKeys.length){
+    el.syncStatus.textContent = '書き出すAPIキーがありません。先にキーを追加してください。';
+    return;
+  }
+  el.syncStatus.textContent = '暗号化しています…';
+  try{
+    const payload = await encryptApiKeys(password);
+    const blob = new Blob([JSON.stringify({ data: payload })], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = SYNC_FILE_NAME;
+    a.click();
+    URL.revokeObjectURL(url);
+    el.syncStatus.textContent = `「${SYNC_FILE_NAME}」をダウンロードしました。GitHubのindex.htmlと同じ場所にアップロードしてください。`;
+  } catch(e){
+    el.syncStatus.textContent = '暗号化に失敗しました。';
+  }
+});
+
+el.syncImportBtn.addEventListener('click', async () => {
+  const password = el.syncPasswordInput.value;
+  if(!password){
+    el.syncStatus.textContent = 'パスワードを入力してください。';
+    return;
+  }
+  el.syncStatus.textContent = '共有ファイルを探しています…';
+  try{
+    const res = await fetch(`./${SYNC_FILE_NAME}?t=${Date.now()}`);
+    if(!res.ok){
+      el.syncStatus.textContent = `「${SYNC_FILE_NAME}」が見つかりませんでした。先に別の端末で書き出し、GitHubにアップロードしてください。`;
+      return;
+    }
+    const json = await res.json();
+    const importedKeys = await decryptApiKeys(password, json.data);
+    if(!Array.isArray(importedKeys)) throw new Error('invalid format');
+
+    let addedCount = 0;
+    importedKeys.forEach(k => {
+      if(k && !state.apiKeys.includes(k)){
+        state.apiKeys.push(k);
+        addedCount++;
+      }
+    });
+    saveApiKeys();
+    renderApiKeyList();
+    el.syncStatus.textContent = addedCount > 0
+      ? `${addedCount}件のAPIキーを取り込みました。`
+      : 'すでにすべてのキーが登録済みでした。';
+    if(el.historyThumbGrid && !el.historyThumbGrid.children.length){
+      renderHistoryThumbnailGrid();
+    }
+  } catch(e){
+    el.syncStatus.textContent = 'パスワードが違うか、ファイルが壊れているため読み込めませんでした。';
   }
 });
 

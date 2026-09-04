@@ -118,6 +118,21 @@
     <div class="modal-actions">
       <button id="api-key-cancel" class="ghost-btn">閉じる</button>
     </div>
+
+    <hr class="modal-divider">
+    <h3 class="modal-subheading">他の端末と共有する</h3>
+    <p class="modal-desc">
+      パスワードを決めて「書き出す」と、暗号化されたファイル(<code>keys.enc.json</code>)がダウンロードされます。
+      これをGitHubリポジトリの<code>index.html</code>と同じ場所にアップロードしておくと、
+      他の端末では同じパスワードを入力して「読み込む」を押すだけでAPIキーを取得できます。
+      ※自動で同期されるわけではなく、キーを追加・変更するたびに書き出し直してアップロードし直す必要があります。
+    </p>
+    <input id="sync-password-input" type="password" placeholder="共有用パスワード（他の端末でも同じものを使用）">
+    <div class="modal-actions">
+      <button id="sync-export-btn" class="ghost-btn">🔒 暗号化して書き出す</button>
+      <button id="sync-import-btn" class="ghost-btn">🔓 共有ファイルから読み込む</button>
+    </div>
+    <p id="sync-status" class="setup-status"></p>
   </div>
 </div>
 
