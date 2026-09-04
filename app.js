@@ -949,11 +949,11 @@ function regeneratePitchTrack(bumpedKey){
   el.pitchTrackBase.innerHTML = '';
   el.pitchTrackColor.innerHTML = '';
   const colors = ['', 'c-green', 'c-pink', 'c-blue'];
-  const pillCount = 34 + Math.floor(Math.random() * 16);
+  const pillCount = 11 + Math.floor(Math.random() * 7); // 11〜17個（大きめのブロックにするため数は少なめ）
 
   // ところどころに空白（フレーズの切れ目）を入れる位置を決める
   const gapPositions = new Set();
-  const gapCount = 2 + Math.floor(Math.random() * 2);
+  const gapCount = 1 + Math.floor(Math.random() * 2);
   for(let i = 0; i < gapCount; i++) gapPositions.add(2 + Math.floor(Math.random() * (pillCount - 4)));
 
   // アイコン（しゃくり・こぶし・フォール・ビブラート）を、ところどころに複数配置する位置を決める
@@ -974,9 +974,11 @@ function regeneratePitchTrack(bumpedKey){
     if(!gapPositions.has(i) && Math.random() < sparkleRatio) sparklePositions.add(i);
   }
 
-  // 階段状の高さレベルを作る：同じ高さがしばらく続き（直線区間）、時々上下にジャンプする
+  // 階段状の高さレベルを作る：同じ高さがしばらく続き（直線区間）、時々上下にジャンプする。
+  // 上下の振れ幅は、実際に描画されているバーの高さから計算する（画面サイズによってズレないようにするため）
   const levelCount = 6;
-  const maxOffsetPx = 62;
+  const barHeight = (el.pitchTrackBase.parentElement && el.pitchTrackBase.parentElement.clientHeight) || 92;
+  const maxOffsetPx = Math.max(16, barHeight - 14 - 16); // ブロックの高さ(14px)と余白ぶんを差し引く
   let level = Math.floor(levelCount / 2);
   let runLength = 3 + Math.floor(Math.random() * 3);
 
@@ -992,7 +994,9 @@ function regeneratePitchTrack(bumpedKey){
     runLength--;
 
     const isGap = gapPositions.has(i);
-    const flex = isGap ? '0.6 1 auto' : `${(1 + Math.random() * 0.7).toFixed(2)} 1 auto`;
+    // 大きいブロックと中くらいのブロックが混ざるようにする（幅の差をはっきりさせる）
+    const isLarge = Math.random() < 0.45;
+    const flex = isGap ? '0.5 1 auto' : (isLarge ? `${(2.4 + Math.random() * 1.4).toFixed(2)} 1 auto` : `${(1.1 + Math.random() * 0.7).toFixed(2)} 1 auto`);
     const marginTop = isGap ? '0' : `${Math.round((level / (levelCount - 1)) * maxOffsetPx)}px`;
     const colorClass = (!isGap && Math.random() >= 0.8) ? colors[Math.floor(Math.random() * colors.length)] : '';
 
