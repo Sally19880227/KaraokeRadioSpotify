@@ -485,8 +485,8 @@ function cleanTitleVariants(rawTitle){
     .replace(/\(Official.*?\)|\[Official.*?\]|\(MV\)|\[MV\]|Official Music Video|Official Video|Lyric Video|Music Video|\bMV\b/gi, '')
     .trim();
 
-  // 括弧内の補足（Live, Remix, Cover等）を除いたバージョン
-  const noBrackets = base.replace(/[（(].*?[）)]|[［\[].*?[］\]]/g, '').trim();
+  // 括弧内の補足（Live, Remix, Cover等）を除いたバージョン（【】隅付き括弧にも対応）
+  const noBrackets = base.replace(/[（(].*?[）)]|[［\[].*?[］\]]|【.*?】/g, '').trim();
 
   // ライブ・カバー・リミックス等を示す語自体を取り除いたバージョン（括弧の外にある場合にも対応）
   const versionWords = /(live|acoustic|remix|cover|instrumental|karaoke|session|ver\.?|version|tour|concert|弾き語り|ライブ|生歌|アコースティック|カバー|リミックス)/gi;
@@ -500,7 +500,7 @@ function guessTrackInfo(v){
   const variants = cleanTitleVariants(rawTitle);
   const primaryTitle = variants[0];
 
-  const separators = [' - ', ' – ', ' — ', '「', '『', '｜', '/'];
+  const separators = [' - ', ' – ', ' — ', '｜', '/', '／'];
   for(const sep of separators){
     if(primaryTitle.includes(sep)){
       const parts = primaryTitle.split(sep);
@@ -579,7 +579,7 @@ function buildTitleCandidates(v){
   const channelArtistSimplified = channelArtist
     .replace(/(Official|オフィシャル|Music|チャンネル|Channel|TV|VEVO|Records?)\s*$/gi, '').trim();
   const variants = cleanTitleVariants(rawTitle);
-  const separators = [' - ', ' – ', ' — ', '「', '『', '｜', '/', ' : ', '：', '~', '〜', '×', '・', '|'];
+  const separators = [' - ', ' – ', ' — ', '｜', '/', '／', ' : ', '：', '~', '〜', '×', '・', '|'];
 
   const candidates = [];
   const pushCandidate = (track, artist) => {
@@ -604,6 +604,15 @@ function buildTitleCandidates(v){
           pushCandidate(left, rest);              // 逆パターン：曲名 - アーティスト名
           pushCandidate(parts[parts.length - 1], left); // 区切りが複数ある場合、末尾だけを曲名として試す
           pushCandidate(left, '');                // 曲名のみ（区切りの前半をタイトルとみなす）
+          pushCandidate(rest, '');                 // 曲名のみ（区切りの後半が別表記の同一タイトルの場合に対応）
+
+          // 「曲名 from ライブ名」「曲名 live at 会場名」のように、曲名の後ろに
+          // ライブ・イベント名などの余分な情報が続く場合、そこで切り落とした候補も加える
+          const trimmedRest = rest.replace(/\s+(?:from|live at|live in|at)\s+.+$/i, '').trim();
+          if(trimmedRest && trimmedRest !== rest){
+            pushCandidate(trimmedRest, left);
+            pushCandidate(trimmedRest, '');
+          }
 
           // 「A covered by B」「A cover by B」のようなカバー表記を検出し、
           // 曲名（left）に対して、原曲アーティスト・カバーしたアーティストの両方を候補にする
@@ -626,9 +635,9 @@ function buildTitleCandidates(v){
   });
 
   // ② 括弧の中身も、副題やアーティスト名の可能性があるため候補に加える
-  const bracketMatches = [...rawTitle.matchAll(/[\(（\[［]([^\)）\]］]+)[\)）\]］]/g)];
+  const bracketMatches = [...rawTitle.matchAll(/[\(（\[［]([^\)）\]］]+)[\)）\]］]|【([^】]+)】|『([^』]+)』|「([^」]+)」/g)];
   bracketMatches.forEach(m => {
-    const inner = m[1].trim();
+    const inner = (m[1] || m[2] || m[3] || m[4] || '').trim();
     if(inner.length >= 2 && inner.length <= 30 && !/official|video|mv|lyric|audio/i.test(inner)){
       pushCandidate(inner, channelArtist);
       pushCandidate(inner, '');
