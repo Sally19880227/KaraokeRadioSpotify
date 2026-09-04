@@ -232,7 +232,11 @@ async function decryptApiKeys(password, payload){
 }
 
 el.syncExportBtn.addEventListener('click', async () => {
-  const password = el.syncPasswordInput.value;
+  let password = el.syncPasswordInput.value;
+  if(!password){
+    password = window.prompt('共有用パスワードを入力してください（他の端末でも同じものを使用します）:') || '';
+    el.syncPasswordInput.value = password;
+  }
   if(!password){
     el.syncStatus.textContent = 'パスワードを入力してください。';
     return;
@@ -258,7 +262,11 @@ el.syncExportBtn.addEventListener('click', async () => {
 });
 
 el.syncImportBtn.addEventListener('click', async () => {
-  const password = el.syncPasswordInput.value;
+  let password = el.syncPasswordInput.value;
+  if(!password){
+    password = window.prompt('共有用パスワードを入力してください:') || '';
+    el.syncPasswordInput.value = password;
+  }
   if(!password){
     el.syncStatus.textContent = 'パスワードを入力してください。';
     return;
@@ -364,12 +372,16 @@ async function ytFetch(path, params, attempt = 0){
     const data = await res.json();
     if(data.error){
       const reason = data.error.errors && data.error.errors[0] && data.error.errors[0].reason;
-      const isQuotaError = reason === 'quotaExceeded' || reason === 'dailyLimitExceeded' || data.error.code === 403;
+      const status = data.error.status || '';
+      const message = data.error.message || '';
+      const isQuotaError = reason === 'quotaExceeded' || reason === 'dailyLimitExceeded'
+        || data.error.code === 403 || status === 'RESOURCE_EXHAUSTED'
+        || /quota/i.test(message);
       if(isQuotaError && attempt < state.apiKeys.length){
         markKeyExhausted(activeKey);
         return ytFetch(path, params, attempt + 1); // 次のキーで自動的に再試行する
       }
-      showStatus(`APIエラー: ${data.error.message}`);
+      showStatus(`APIエラー: ${message}`);
       return null;
     }
     return data;
