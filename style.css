@@ -274,8 +274,8 @@ button{ font-family:inherit; cursor:pointer; }
 
 /* 通過済みブロックに付与する、レインボーのキラキラ */
 .pitch-sparkle-cluster{
-  position:absolute; top:-18px; left:50%; transform: translateX(-50%);
-  width:48px; height:40px; pointer-events:none; z-index:2;
+  position:absolute; top:-20px; left:50%; transform: translateX(-50%);
+  width:58px; height:46px; pointer-events:none; z-index:2;
 }
 .pitch-sparkle-cluster i{
   position:absolute; font-style:normal; opacity:0;

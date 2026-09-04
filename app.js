@@ -1179,7 +1179,7 @@ const SPARKLE_GLYPHS = ['✦', '✧', '⋆', '✶'];
 function buildSparkleCluster(){
   const cluster = document.createElement('span');
   cluster.className = 'pitch-sparkle-cluster';
-  const starCount = 5 + Math.floor(Math.random() * 4); // 5〜8個
+  const starCount = 7 + Math.floor(Math.random() * 5); // 7〜11個
   for(let s = 0; s < starCount; s++){
     const star = document.createElement('i');
     star.textContent = SPARKLE_GLYPHS[Math.floor(Math.random() * SPARKLE_GLYPHS.length)];
@@ -1220,7 +1220,7 @@ function regeneratePitchTrack(bumpedKey){
 
   // レインボーのキラキラを付与する箇所を、ところどころに複数決める（かなり多め・派手に）
   const sparklePositions = new Set();
-  const sparkleRatio = 0.5 + Math.random() * 0.25; // ブロックの50〜75%程度に付与
+  const sparkleRatio = 0.75 + Math.random() * 0.2; // ブロックの75〜95%程度に付与
   for(let i = 0; i < pillCount; i++){
     if(!gapPositions.has(i) && Math.random() < sparkleRatio) sparklePositions.add(i);
   }
