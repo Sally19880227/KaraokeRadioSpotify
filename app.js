@@ -63,12 +63,6 @@ const el = {
   statFall: document.getElementById('stat-fall'),
   statVibrato: document.getElementById('stat-vibrato'),
   pitchSegments: document.getElementById('pitch-segments'),
-  karaokeOffsetSlider: document.getElementById('karaoke-offset-slider'),
-  karaokeRateSlider: document.getElementById('karaoke-rate-slider'),
-  karaokeRateValue: document.getElementById('karaoke-rate-value'),
-  karaokeOffsetValue: document.getElementById('karaoke-offset-value'),
-  karaokeOffsetMinus: document.getElementById('karaoke-offset-minus'),
-  karaokeOffsetPlus: document.getElementById('karaoke-offset-plus'),
   backToSearchBtn: document.getElementById('back-to-search-btn'),
 
   playPauseBtn: document.getElementById('play-pause-btn'),
@@ -869,20 +863,13 @@ function computeLinearFit(points){
   return { rate, offset: -intercept };
 }
 
-// 速度・ズレをスライダーの範囲内に収めつつ反映する
+// 速度・ズレを決められた範囲内に収めつつ反映する（スライダーUIは無いが内部値として保持する）
 function applyRateAndOffset(rate, offset){
-  const rateMin = parseFloat(el.karaokeRateSlider.min);
-  const rateMax = parseFloat(el.karaokeRateSlider.max);
-  const offsetMin = parseFloat(el.karaokeOffsetSlider.min);
-  const offsetMax = parseFloat(el.karaokeOffsetSlider.max);
+  const rateMin = 0.90, rateMax = 1.10;
+  const offsetMin = -10, offsetMax = 10;
 
   state.karaokeRate = Math.round(Math.min(rateMax, Math.max(rateMin, rate)) * 1000) / 1000;
   state.karaokeOffset = Math.round(Math.min(offsetMax, Math.max(offsetMin, offset)) * 10) / 10;
-
-  el.karaokeRateSlider.value = state.karaokeRate;
-  el.karaokeOffsetSlider.value = state.karaokeOffset;
-  updateKaraokeRateDisplay();
-  updateKaraokeOffsetDisplay();
 }
 
 // 現在の行から次の行までの時間に合わせて、文字が色付いていくアニメーションの速さを設定する
@@ -1079,33 +1066,7 @@ el.manualLrcApply.addEventListener('click', () => {
   el.lyricsEditModal.classList.add('hidden');
 });
 
-// ---------- ズレ調整 ----------
-function updateKaraokeOffsetDisplay(){
-  state.karaokeOffset = parseFloat(el.karaokeOffsetSlider.value);
-  el.karaokeOffsetValue.textContent = `${state.karaokeOffset.toFixed(1)}秒`;
-}
-el.karaokeOffsetSlider.addEventListener('input', updateKaraokeOffsetDisplay);
-el.karaokeOffsetSlider.addEventListener('change', updateKaraokeOffsetDisplay);
-
-function updateKaraokeRateDisplay(){
-  state.karaokeRate = parseFloat(el.karaokeRateSlider.value);
-  el.karaokeRateValue.textContent = `${Math.round(state.karaokeRate * 100)}%`;
-}
-el.karaokeRateSlider.addEventListener('input', updateKaraokeRateDisplay);
-el.karaokeRateSlider.addEventListener('change', updateKaraokeRateDisplay);
-
-// ---------- タップで同期（2点計測して自動計算） ----------
-
-function stepKaraokeOffset(delta){
-  const min = parseFloat(el.karaokeOffsetSlider.min);
-  const max = parseFloat(el.karaokeOffsetSlider.max);
-  let next = Math.round((state.karaokeOffset + delta) * 10) / 10;
-  next = Math.min(max, Math.max(min, next));
-  el.karaokeOffsetSlider.value = next;
-  updateKaraokeOffsetDisplay();
-}
-el.karaokeOffsetMinus.addEventListener('click', () => stepKaraokeOffset(-0.2));
-el.karaokeOffsetPlus.addEventListener('click', () => stepKaraokeOffset(0.2));
+// ---------- タップで同期（クリックした行に合わせてズレ・速度を内部的に調整） ----------
 
 // ---------- Init ----------
 renderSearchHistory();

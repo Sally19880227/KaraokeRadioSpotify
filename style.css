@@ -191,17 +191,6 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .karaoke-artist{ font-size:12.5px; color: var(--text-dim); margin-top:3px; }
 
-.karaoke-offset{ display:flex; align-items:center; gap:6px; flex:1; min-width:220px; max-width:380px; }
-.karaoke-rate{ min-width:170px; max-width:260px; }
-.karaoke-offset label{ font-size:11.5px; color: var(--text-dim); white-space:nowrap; flex-shrink:0; }
-.karaoke-offset input[type=range]{ flex:1; accent-color: var(--accent); }
-.offset-step-btn{
-  background: var(--surface); border:1px solid var(--line); color: var(--text);
-  font-size:11px; font-weight:700; padding:5px 8px; border-radius:6px; flex-shrink:0;
-}
-.offset-step-btn:hover{ border-color: var(--accent); color: var(--accent); }
-#karaoke-offset-value{ font-size:11.5px; color: var(--text-dim); width:52px; flex-shrink:0; text-align:right; }
-
 .karaoke-close-btn{
   background: var(--surface); border:1px solid var(--line); color: var(--text);
   padding:8px 16px; border-radius:999px; font-size:13px; flex-shrink:0;
@@ -388,16 +377,15 @@ button{ font-family:inherit; cursor:pointer; }
 
 
 .control-bar{
-  display:flex; align-items:center; justify-content:center; gap:16px;
-  padding: 16px 20px; border-top:1px solid var(--line); flex-shrink:0;
-  position:relative; z-index:2; background: rgba(10,10,14,0.35); backdrop-filter: blur(6px);
+  display:flex; align-items:center; gap:10px;
+  flex-shrink:0;
 }
 .control-btn{
-  width:52px; height:52px; border-radius:50%; border:none;
-  background: var(--accent); color:#0c0c10; font-size:19px;
+  width:38px; height:38px; border-radius:50%; border:none;
+  background: var(--accent); color:#0c0c10; font-size:15px; flex-shrink:0;
 }
-.control-btn-secondary{ background: var(--surface); color: var(--text); border:1px solid var(--line); width:44px; height:44px; font-size:16px; }
-.now-playing-note{ font-size:12px; color: var(--text-dim); margin-left:6px; }
+.control-btn-secondary{ background: var(--surface); color: var(--text); border:1px solid var(--line); width:34px; height:34px; font-size:13px; }
+.now-playing-note{ font-size:11px; color: var(--text-dim); display:none; }
 
 /* ---------- Modal ---------- */
 .modal{
@@ -427,7 +415,6 @@ button{ font-family:inherit; cursor:pointer; }
   .topbar{ flex-wrap:wrap; }
   .search-form{ order:3; max-width:none; width:100%; }
   .karaoke-title{ max-width:46vw; }
-  .karaoke-offset{ order:3; flex-basis:100%; max-width:none; }
   .result-thumb{ width:76px; }
   .pitch-bar{ height:56px; }
   .pitch-stat{ font-size:10px; }
