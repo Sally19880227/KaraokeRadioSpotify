@@ -258,7 +258,7 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .full-lyrics-column{ display:flex; flex-direction:column; min-width:0; }
 .full-lyrics-line{
-  font-size: clamp(14px, 2.1vw, 19px); line-height:1.3; color: var(--text-dim);
+  font-size: clamp(18px, 2.1vw, 23px); line-height:1.3; color: var(--text-dim);
   padding: 1px 8px; border-radius:6px; cursor:pointer; transition: color .2s ease, background-color .2s ease;
 }
 .full-lyrics-line.is-blank{
@@ -266,7 +266,7 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .full-lyrics-line:hover{ background: rgba(255,255,255,0.06); }
 .full-lyrics-line.is-active{
-  font-weight:800; font-size: clamp(20px, 3.2vw, 28px);
+  font-weight:800; font-size: clamp(24px, 3.2vw, 32px);
   background-image: linear-gradient(90deg,
     #ff5e6c 0%, #ff9f4d 16%, #ffe066 32%, #8cff8c 48%, #5ecbff 64%, #8c9dff 80%, #d68cff 100%);
   background-size: 200% 100%;
