@@ -1388,6 +1388,24 @@ function renderKaraokeWindow(idx){
   el.karaokeLines.addEventListener('mousedown', e => handleStart(e.clientY));
   window.addEventListener('mousemove', e => { if(dragStartY !== null) handleMove(e.clientY); });
   window.addEventListener('mouseup', handleEnd);
+
+  // マウスホイール／トラックパッドのスクロールでも同様に前後の行を切り替えられるようにする
+  let wheelAccum = 0;
+  el.karaokeLines.addEventListener('wheel', e => {
+    if(state.lyricsMode !== 'tracking') return;
+    e.preventDefault();
+    wheelAccum += e.deltaY;
+    if(Math.abs(wheelAccum) < STEP_PX) return;
+    const dir = wheelAccum > 0 ? -1 : 1; // 下スクロールで過去へ、上スクロールで先へ
+    wheelAccum = 0;
+    const minOffset = -(state.karaokeActiveIndex);
+    const maxOffset = (state.lyrics.length - 1) - state.karaokeActiveIndex;
+    const nextOffset = Math.max(minOffset, Math.min(maxOffset, state.manualLineOffset + dir));
+    if(nextOffset !== state.manualLineOffset){
+      state.manualLineOffset = nextOffset;
+      renderKaraokeWindow(state.karaokeActiveIndex);
+    }
+  }, { passive: false });
 })();
 
 // 歌詞全体表示でタップした行へ、実際の再生位置を強制的にジャンプさせる
@@ -1471,10 +1489,9 @@ function computeLinearFit(points){
 // 速度・ズレを決められた範囲内に収めつつ反映する（スライダーUIは無いが内部値として保持する）
 function applyRateAndOffset(rate, offset){
   const rateMin = 0.90, rateMax = 1.10;
-  const offsetMin = -10, offsetMax = 10;
 
   state.karaokeRate = Math.round(Math.min(rateMax, Math.max(rateMin, rate)) * 1000) / 1000;
-  state.karaokeOffset = Math.round(Math.min(offsetMax, Math.max(offsetMin, offset)) * 10) / 10;
+  state.karaokeOffset = Math.round(offset * 10) / 10; // どれだけ離れた行にも正確に合わせられるよう、上限は設けない
 }
 
 // 現在の行から次の行までの時間に合わせて、文字が色付いていくアニメーションの速さを設定する
