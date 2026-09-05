@@ -1309,6 +1309,7 @@ function renderFullLyricsView(activeIdx){
 }
 
 function renderKaraokeWindow(idx){
+  updatePitchBar(idx);
   if(state.lyricsMode === 'full'){
     renderFullLyricsView(idx);
     return;
@@ -1510,8 +1511,17 @@ function applyKaraokeFillAnimation(idx){
   // 強制的にリフローさせてアニメーションを最初から再生させる
   void currentEl.offsetWidth;
   currentEl.style.animation = `karaokeFill ${duration}s linear forwards`;
+}
 
-  // 音程バー（演出用）：行が変わるたびに左端からやり直し、その行が終わるタイミングで右端まで進む
+// 音程バー（演出用）の更新。表示モードに関わらず（歌詞全体表示でも）動作するよう、
+// 「追いかける表示」のDOM要素には依存しない独立した処理にしている
+function updatePitchBar(idx){
+  if(idx < 0 || !state.lyrics[idx]) return;
+  const current = state.lyrics[idx];
+  const next = state.lyrics[idx + 1];
+  let duration = next ? (next.time - current.time) / state.karaokeRate : 4;
+  duration = Math.min(8, Math.max(1.2, duration));
+
   const bumpedKey = bumpPitchStats();
   regeneratePitchTrack(bumpedKey);
   movePitchCursor(duration);
