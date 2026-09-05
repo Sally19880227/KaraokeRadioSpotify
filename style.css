@@ -100,7 +100,10 @@ button{ font-family:inherit; cursor:pointer; }
   font-size:12.5px; padding:6px 13px; border-radius:999px;
 }
 .suggest-chip:hover{ border-color: var(--gold); color: var(--gold); }
-#trending-chip{ border-color: var(--gold); color: var(--gold); font-weight:600; }
+#trending-chip{ border-color: rgba(255,209,102,0.5); }
+.suggest-chip.is-selected{
+  background: var(--gold); border-color: var(--gold); color:#0c0c10; font-weight:700;
+}
 
 /* ---------- 検索結果 ---------- */
 .results-view{ max-width: 900px; margin: 0 auto; padding: 20px; }

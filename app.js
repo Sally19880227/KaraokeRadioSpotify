@@ -412,9 +412,16 @@ el.searchForm.addEventListener('submit', (e) => {
   loadSearchResults(true);
 });
 
+// 選んだチップを視覚的にハイライトする（見た目上「選択中」と分かるようにする）
+function markChipSelected(clickedEl){
+  document.querySelectorAll('.suggest-chip.is-selected').forEach(c => c.classList.remove('is-selected'));
+  clickedEl.classList.add('is-selected');
+}
+
 // 年代・ジャンルのおすすめキーワードチップ
 document.querySelectorAll('.suggest-chip[data-q]').forEach(btn => {
   btn.addEventListener('click', () => {
+    markChipSelected(btn);
     el.searchInput.value = btn.dataset.q;
     el.searchForm.dispatchEvent(new Event('submit', { cancelable: true }));
   });
@@ -450,6 +457,7 @@ function buildArtistChip(name){
   btn.className = 'suggest-chip';
   btn.textContent = name;
   btn.addEventListener('click', () => {
+    markChipSelected(btn);
     el.searchInput.value = name;
     el.searchForm.dispatchEvent(new Event('submit', { cancelable: true }));
   });
@@ -476,6 +484,7 @@ if(uniqueArtists.length > ARTIST_INITIAL_COUNT){
 }
 
 document.getElementById('trending-chip').addEventListener('click', async () => {
+  markChipSelected(document.getElementById('trending-chip'));
   showResultsView();
   el.historyThumbSection.classList.add('hidden');
   el.resultsHeading.classList.remove('hidden');
