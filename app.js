@@ -1174,6 +1174,7 @@ async function loadKaraokeLyrics(v){
   state.currentVideoForLyrics = v;
   el.syncHint.textContent = '同じアーティストの曲を自動的に流し続けます';
   el.karaokeLines.innerHTML = '';
+  document.getElementById('full-lyrics-view').innerHTML = '';
   el.karaokeStatus.textContent = '歌詞を検索中…';
   if(el.lyricCandidates) el.lyricCandidates.innerHTML = '';
 
@@ -1202,8 +1203,11 @@ async function loadKaraokeLyrics(v){
 function applyLyrics(lines){
   state.lyrics = lines;
   state.karaokeActiveIndex = -1;
+  state.manualLineOffset = 0;
   if(!state.lyrics.length){
     el.karaokeStatus.textContent = '歌詞データを解析できませんでした。';
+    el.karaokeLines.innerHTML = '';
+    document.getElementById('full-lyrics-view').innerHTML = '';
     return;
   }
   el.karaokeStatus.textContent = '';
@@ -1282,6 +1286,11 @@ function renderFullLyricsView(activeIdx){
   [...container.children].forEach((div, i) => {
     div.classList.toggle('is-active', i === activeIdx);
   });
+  // 段組み(column-count)レイアウト内では、クラス変更が画面に反映されず
+  // 再描画されないことがあるため、強制的にリフローさせる
+  void container.offsetHeight;
+  container.style.transform = 'translateZ(0)';
+
   const activeEl = container.children[activeIdx];
   if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
