@@ -1279,7 +1279,7 @@ function renderFullLyricsView(activeIdx){
       const div = document.createElement('div');
       div.className = 'full-lyrics-line';
       div.textContent = line.text;
-      div.addEventListener('click', () => resyncToLine(i));
+      div.addEventListener('click', () => jumpToLine(i));
       container.appendChild(div);
     });
   }
@@ -1376,6 +1376,24 @@ function renderKaraokeWindow(idx){
   window.addEventListener('mousemove', e => { if(dragStartY !== null) handleMove(e.clientY); });
   window.addEventListener('mouseup', handleEnd);
 })();
+
+// 歌詞全体表示でタップした行へ、実際の再生位置を強制的にジャンプさせる
+function jumpToLine(i){
+  if(!state.player || !state.player.seekTo) return;
+  const line = state.lyrics[i];
+  if(!line) return;
+
+  const targetTime = (line.time + state.karaokeOffset) / state.karaokeRate;
+  state.player.seekTo(Math.max(0, targetTime), true);
+  if(state.player.getPlayerState && state.player.getPlayerState() !== YT.PlayerState.PLAYING){
+    state.player.playVideo();
+  }
+
+  state.manualLineOffset = 0;
+  state.karaokeActiveIndex = i;
+  renderKaraokeWindow(i);
+  el.syncHint.textContent = `「${line.text}」から再生します。`;
+}
 
 function resyncToLine(i){
   if(!state.player || !state.player.getCurrentTime) return;
