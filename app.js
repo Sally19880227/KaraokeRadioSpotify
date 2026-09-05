@@ -1300,8 +1300,7 @@ function renderFullLyricsView(activeIdx){
     const i = parseInt(div.dataset.index, 10);
     const active = i === activeIdx;
     div.classList.toggle('is-active', active);
-    div.style.color = active ? 'var(--gold)' : '';
-    div.style.fontWeight = active ? '700' : '';
+    div.style.fontWeight = active ? '800' : '';
   });
 
   const activeEl = container.querySelector(`.full-lyrics-line[data-index="${activeIdx}"]`);

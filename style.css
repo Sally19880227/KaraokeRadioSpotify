@@ -258,12 +258,23 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .full-lyrics-column{ display:flex; flex-direction:column; min-width:0; }
 .full-lyrics-line{
-  font-size: clamp(11px, 1.6vw, 15px); line-height:1.7; color: var(--text-dim);
-  padding: 2px 8px; border-radius:6px; cursor:pointer; transition: color .2s ease, background-color .2s ease;
+  font-size: clamp(14px, 2.1vw, 19px); line-height:1.8; color: var(--text-dim);
+  padding: 3px 8px; border-radius:6px; cursor:pointer; transition: color .2s ease, background-color .2s ease;
 }
 .full-lyrics-line:hover{ background: rgba(255,255,255,0.06); }
 .full-lyrics-line.is-active{
-  color: var(--gold); font-weight:700; font-size: clamp(17px, 2.6vw, 23px);
+  font-weight:800; font-size: clamp(20px, 3.2vw, 28px);
+  background-image: linear-gradient(90deg,
+    #ff5e6c 0%, #ff9f4d 16%, #ffe066 32%, #8cff8c 48%, #5ecbff 64%, #8c9dff 80%, #d68cff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent !important;
+  animation: fullLyricsRainbow 6s linear infinite;
+  text-shadow: none;
+}
+@keyframes fullLyricsRainbow{
+  from{ background-position: 0% 0; }
+  to{ background-position: -200% 0; }
+}
   text-shadow: 0 0 18px var(--accent-glow);
 }
 
