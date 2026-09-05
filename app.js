@@ -1417,7 +1417,7 @@ function highlightLineDirectly(i){
 
   const videoTime = state.player.getCurrentTime();
   const offset = (videoTime * state.karaokeRate) - line.time;
-  state.karaokeOffset = Math.round(Math.min(10, Math.max(-10, offset)) * 10) / 10;
+  state.karaokeOffset = Math.round(offset * 10) / 10; // 歌詞全体表示ではどこをタップしても正確に合わせられるよう、上限は設けない
 
   state.karaokeActiveIndex = i;
   renderKaraokeWindow(i);
