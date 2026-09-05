@@ -1289,7 +1289,7 @@ function renderFullLyricsView(activeIdx){
         div.className = 'full-lyrics-line';
         div.textContent = state.lyrics[i].text;
         div.dataset.index = i;
-        div.addEventListener('click', () => resyncToLine(i));
+        div.addEventListener('click', () => highlightLineDirectly(i));
         colDiv.appendChild(div);
       }
       container.appendChild(colDiv);
@@ -1406,6 +1406,22 @@ function jumpToLine(i){
   state.karaokeActiveIndex = i;
   renderKaraokeWindow(i);
   el.syncHint.textContent = `「${line.text}」から再生します。`;
+}
+
+// 歌詞全体表示でのタップ用：複数タップの速度自動調整には使わず、単純にその行へ正確に合わせるだけ
+function highlightLineDirectly(i){
+  if(!state.player || !state.player.getCurrentTime) return;
+  const line = state.lyrics[i];
+  if(!line) return;
+  state.manualLineOffset = 0;
+
+  const videoTime = state.player.getCurrentTime();
+  const offset = (videoTime * state.karaokeRate) - line.time;
+  state.karaokeOffset = Math.round(Math.min(10, Math.max(-10, offset)) * 10) / 10;
+
+  state.karaokeActiveIndex = i;
+  renderKaraokeWindow(i);
+  el.syncHint.textContent = `「${line.text}」に合わせました。`;
 }
 
 function resyncToLine(i){
