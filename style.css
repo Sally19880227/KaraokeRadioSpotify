@@ -251,7 +251,7 @@ button{ font-family:inherit; cursor:pointer; }
 .lyrics-mode-btn.is-active{ background: var(--gold); border-color: var(--gold); color:#0c0c10; }
 
 .full-lyrics-view{
-  width:100%; max-width:none; height:68vh;
+  width:100%; max-width:none; height:62vh; margin-bottom:24px;
   column-count:4; column-gap:24px; column-fill:auto;
   overflow-x:auto; overflow-y:hidden;
   padding: 10px 3vw; -webkit-overflow-scrolling:touch;
