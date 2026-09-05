@@ -37,7 +37,11 @@ button{ font-family:inherit; cursor:pointer; }
   background: rgba(12,12,16,0.95);
   position: sticky; top:0; z-index: 50;
 }
-.brand{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.brand{
+  display:flex; align-items:center; gap:8px; flex-shrink:0;
+  background:none; border:none; padding:0; cursor:pointer;
+}
+.brand:hover .brand-name{ color: var(--gold); }
 .brand-mark{
   width:30px; height:30px; border-radius:50%;
   background: var(--accent); color:#0c0c10;
@@ -72,14 +76,31 @@ button{ font-family:inherit; cursor:pointer; }
 .search-history-label{ font-size:12.5px; color: var(--text-dim); flex-shrink:0; }
 .search-history-chips{ display:flex; flex-wrap:wrap; gap:8px; flex:1; }
 .search-history-chip{
+  display:inline-flex; align-items:center;
   background: var(--surface-raised); border:1px solid var(--line); color: var(--text);
-  font-size:12.5px; padding:6px 13px; border-radius:999px;
+  border-radius:999px; overflow:hidden;
+}
+.search-history-chip-label{
+  background:transparent; border:none; color: var(--text);
+  font-size:12.5px; padding:6px 6px 6px 13px;
 }
 .search-history-chip:hover{ border-color: var(--accent); }
+.search-history-chip-remove{
+  background:transparent; border:none; color: var(--text-dim);
+  font-size:11px; padding:6px 10px 6px 4px;
+}
+.search-history-chip-remove:hover{ color:#ff5e6c; }
 .search-history-clear{
   background:transparent; border:none; color: var(--text-dim);
   font-size:12px; text-decoration: underline; flex-shrink:0; margin-left:auto;
 }
+
+.suggest-chip{
+  background: var(--surface-raised); border:1px solid var(--line); color: var(--text);
+  font-size:12.5px; padding:6px 13px; border-radius:999px;
+}
+.suggest-chip:hover{ border-color: var(--gold); color: var(--gold); }
+#trending-chip{ border-color: var(--gold); color: var(--gold); font-weight:600; }
 
 /* ---------- 検索結果 ---------- */
 .results-view{ max-width: 900px; margin: 0 auto; padding: 20px; }
@@ -190,6 +211,10 @@ button{ font-family:inherit; cursor:pointer; }
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 42vw;
 }
 .karaoke-artist{ font-size:12.5px; color: var(--text-dim); margin-top:3px; }
+
+.brightness-mini{ display:flex; align-items:center; gap:6px; }
+.brightness-mini span{ font-size:13px; }
+.brightness-mini input[type=range]{ width:80px; accent-color: var(--gold); }
 
 .karaoke-close-btn{
   background: var(--surface); border:1px solid var(--line); color: var(--text);

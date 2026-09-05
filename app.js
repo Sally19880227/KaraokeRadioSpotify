@@ -37,6 +37,7 @@ const el = {
   searchForm: document.getElementById('search-form'),
   searchInput: document.getElementById('search-input'),
   settingsBtn: document.getElementById('settings-btn'),
+  brandHomeBtn: document.getElementById('brand-home-btn'),
   settingsModal: document.getElementById('settings-modal'),
   apiKeyInput: document.getElementById('api-key-input'),
   apiKeyAddBtn: document.getElementById('api-key-add-btn'),
@@ -48,6 +49,7 @@ const el = {
   syncImportBtn: document.getElementById('sync-import-btn'),
   syncStatus: document.getElementById('sync-status'),
   bgBrightnessSlider: document.getElementById('bg-brightness-slider'),
+  bgBrightnessSliderMini: document.getElementById('bg-brightness-slider-mini'),
 
   searchHistory: document.getElementById('search-history'),
   searchHistoryChips: document.getElementById('search-history-chips'),
@@ -362,14 +364,32 @@ function renderSearchHistory(){
   }
   el.searchHistory.classList.remove('hidden');
   history.forEach(q => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
+    const chip = document.createElement('span');
     chip.className = 'search-history-chip';
-    chip.textContent = q;
-    chip.addEventListener('click', () => {
+
+    const label = document.createElement('button');
+    label.type = 'button';
+    label.className = 'search-history-chip-label';
+    label.textContent = q;
+    label.addEventListener('click', () => {
       el.searchInput.value = q;
       el.searchForm.dispatchEvent(new Event('submit', { cancelable: true }));
     });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'search-history-chip-remove';
+    removeBtn.setAttribute('aria-label', `「${q}」を履歴から削除`);
+    removeBtn.textContent = '✕';
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const updated = getSearchHistory().filter(item => item !== q);
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+      renderSearchHistory();
+    });
+
+    chip.appendChild(label);
+    chip.appendChild(removeBtn);
     el.searchHistoryChips.appendChild(chip);
   });
 }
@@ -390,6 +410,39 @@ el.searchForm.addEventListener('submit', (e) => {
   state.nextPageToken = null;
   saveSearchHistory(q);
   loadSearchResults(true);
+});
+
+// 年代・ジャンルのおすすめキーワードチップ
+document.querySelectorAll('.suggest-chip[data-q]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    el.searchInput.value = btn.dataset.q;
+    el.searchForm.dispatchEvent(new Event('submit', { cancelable: true }));
+  });
+});
+
+// 「今人気の曲」：YouTubeの急上昇（音楽カテゴリ）チャートを使う。search.listより消費クォータが少ない
+document.getElementById('trending-chip').addEventListener('click', async () => {
+  showResultsView();
+  el.historyThumbSection.classList.add('hidden');
+  el.resultsHeading.classList.remove('hidden');
+  el.resultsHeading.textContent = '🔥 今人気の曲';
+  el.resultsList.innerHTML = '';
+  el.loadMore.classList.add('hidden');
+  showStatus('読み込み中…');
+
+  const data = await ytFetch('videos', {
+    part: 'snippet', chart: 'mostPopular', videoCategoryId: '10', regionCode: 'JP', maxResults: 25,
+  });
+  if(!data) return;
+  const tracks = (data.items || []).map(it => ({
+    id: it.id,
+    title: it.snippet.title,
+    channel: it.snippet.channelTitle,
+    thumb: it.snippet.thumbnails?.medium?.url || it.snippet.thumbnails?.default?.url,
+  }));
+  state.currentList = tracks;
+  tracks.forEach(v => el.resultsList.appendChild(buildResultCard(v)));
+  showStatus(tracks.length ? '' : '取得できませんでした。');
 });
 
 async function ytFetch(path, params, attempt = 0){
@@ -542,6 +595,16 @@ async function renderHistoryThumbnailGrid(){
 }
 
 // ---------- 画面切り替え ----------
+el.brandHomeBtn.addEventListener('click', () => {
+  el.searchInput.value = '';
+  showResultsView();
+  el.historyThumbSection.classList.remove('hidden');
+  el.resultsHeading.classList.add('hidden');
+  if(!el.historyThumbGrid.children.length){
+    renderHistoryThumbnailGrid();
+  }
+});
+
 function showResultsView(){
   el.karaokeView.classList.add('hidden');
   el.resultsView.classList.remove('hidden');
@@ -1410,19 +1473,17 @@ el.manualLrcApply.addEventListener('click', () => {
 const BG_BRIGHTNESS_KEY = 'kr_bg_brightness';
 function applyBgBrightness(value){
   document.documentElement.style.setProperty('--bg-brightness', value);
+  el.bgBrightnessSlider.value = value;
+  el.bgBrightnessSliderMini.value = value;
+  localStorage.setItem(BG_BRIGHTNESS_KEY, value);
 }
 function loadBgBrightness(){
   const stored = parseFloat(localStorage.getItem(BG_BRIGHTNESS_KEY));
   return isFinite(stored) ? stored : 0.75;
 }
-const initialBrightness = loadBgBrightness();
-el.bgBrightnessSlider.value = initialBrightness;
-applyBgBrightness(initialBrightness);
-el.bgBrightnessSlider.addEventListener('input', () => {
-  const value = parseFloat(el.bgBrightnessSlider.value);
-  applyBgBrightness(value);
-  localStorage.setItem(BG_BRIGHTNESS_KEY, value);
-});
+applyBgBrightness(loadBgBrightness());
+el.bgBrightnessSlider.addEventListener('input', () => applyBgBrightness(parseFloat(el.bgBrightnessSlider.value)));
+el.bgBrightnessSliderMini.addEventListener('input', () => applyBgBrightness(parseFloat(el.bgBrightnessSliderMini.value)));
 
 // ---------- Init ----------
 state.apiKeys = loadApiKeys();
