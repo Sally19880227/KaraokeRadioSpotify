@@ -1286,8 +1286,9 @@ function renderFullLyricsView(activeIdx){
       const end = Math.min(state.lyrics.length, start + perColumn);
       for(let i = start; i < end; i++){
         const div = document.createElement('div');
-        div.className = 'full-lyrics-line';
-        div.textContent = state.lyrics[i].text;
+        const lineText = state.lyrics[i].text;
+        div.className = 'full-lyrics-line' + (lineText === '♪' ? ' is-blank' : '');
+        div.textContent = lineText;
         div.dataset.index = i;
         div.addEventListener('click', () => highlightLineDirectly(i));
         colDiv.appendChild(div);

@@ -261,6 +261,9 @@ button{ font-family:inherit; cursor:pointer; }
   font-size: clamp(14px, 2.1vw, 19px); line-height:1.8; color: var(--text-dim);
   padding: 3px 8px; border-radius:6px; cursor:pointer; transition: color .2s ease, background-color .2s ease;
 }
+.full-lyrics-line.is-blank{
+  min-height: 0.4em; line-height:0.6; opacity:0.35; font-size:10px;
+}
 .full-lyrics-line:hover{ background: rgba(255,255,255,0.06); }
 .full-lyrics-line.is-active{
   font-weight:800; font-size: clamp(20px, 3.2vw, 28px);
