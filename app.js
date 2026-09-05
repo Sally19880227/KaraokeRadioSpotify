@@ -21,6 +21,8 @@ const state = {
 
   lyrics: [],
   karaokeActiveIndex: -1,
+  manualLineOffset: 0,
+  lyricsMode: 'tracking',
   karaokeSyncTimer: null,
   karaokeOffset: 0,
   karaokeRate: 1.0,
@@ -1231,12 +1233,68 @@ function karaokeTick(){
   }
   if(idx === state.karaokeActiveIndex) return;
   state.karaokeActiveIndex = idx;
+  state.manualLineOffset = 0; // 再生が自然に進んだら、手動でさかのぼった分はリセットする
   renderKaraokeWindow(idx);
 }
 
 // 前後数行をまとめて表示する（前1行・現在1行・次2行）。各行はタップで即座に同期し直せる
+// ---------- 表示モード（追いかける表示 / 歌詞全体を表示）。選択は次の曲にも引き継ぐ ----------
+const LYRICS_MODE_KEY = 'kr_lyrics_display_mode';
+function loadLyricsMode(){
+  const stored = localStorage.getItem(LYRICS_MODE_KEY);
+  return stored === 'full' ? 'full' : 'tracking';
+}
+function saveLyricsMode(mode){
+  localStorage.setItem(LYRICS_MODE_KEY, mode);
+}
+function applyLyricsMode(mode){
+  state.lyricsMode = mode;
+  saveLyricsMode(mode);
+  document.getElementById('mode-tracking-btn').classList.toggle('is-active', mode === 'tracking');
+  document.getElementById('mode-full-btn').classList.toggle('is-active', mode === 'full');
+  el.karaokeLines.classList.toggle('hidden', mode !== 'tracking');
+  document.getElementById('full-lyrics-view').classList.toggle('hidden', mode !== 'full');
+  document.getElementById('karaoke-tap-hint').classList.toggle('hidden', mode !== 'tracking');
+  if(mode === 'full') renderFullLyricsView(state.karaokeActiveIndex);
+  else renderKaraokeWindow(state.karaokeActiveIndex);
+}
+document.getElementById('mode-tracking-btn').addEventListener('click', () => applyLyricsMode('tracking'));
+document.getElementById('mode-full-btn').addEventListener('click', () => applyLyricsMode('full'));
+
+// 歌詞全体を一覧表示し、現在の行だけハイライト＋自動スクロールする
+function renderFullLyricsView(activeIdx){
+  const container = document.getElementById('full-lyrics-view');
+  if(!state.lyrics.length){
+    container.innerHTML = '';
+    return;
+  }
+  // すでに同じ曲ぶんの行が描画済みなら作り直さず、ハイライトだけ更新する
+  if(container.children.length !== state.lyrics.length){
+    container.innerHTML = '';
+    state.lyrics.forEach((line, i) => {
+      const div = document.createElement('div');
+      div.className = 'full-lyrics-line';
+      div.textContent = line.text;
+      div.addEventListener('click', () => resyncToLine(i));
+      container.appendChild(div);
+    });
+  }
+  [...container.children].forEach((div, i) => {
+    div.classList.toggle('is-active', i === activeIdx);
+  });
+  const activeEl = container.children[activeIdx];
+  if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 function renderKaraokeWindow(idx){
+  if(state.lyricsMode === 'full'){
+    renderFullLyricsView(idx);
+    return;
+  }
+  const effectiveIdx = Math.max(0, idx + state.manualLineOffset);
   el.karaokeLines.innerHTML = '';
+  el.karaokeLines.classList.toggle('is-browsing-back', state.manualLineOffset < 0);
+  el.karaokeLines.classList.toggle('is-browsing-fwd', state.manualLineOffset > 0);
   const positions = [
     { offset: -1, cls: 'k-prev' },
     { offset: 0,  cls: 'k-current' },
@@ -1244,7 +1302,7 @@ function renderKaraokeWindow(idx){
     { offset: 2,  cls: 'k-next2' },
   ];
   positions.forEach(p => {
-    const i = idx + p.offset;
+    const i = effectiveIdx + p.offset;
     const line = state.lyrics[i];
 
     if(p.cls === 'k-current'){
@@ -1280,10 +1338,41 @@ function renderKaraokeWindow(idx){
 // タップされた行が「今まさに歌われている」ことにして同期し直す。
 // タップ履歴が2点以上たまり、かつ十分に離れていれば、速度(rate)とズレ(offset)を
 // 最小二乗法でまとめて自動計算する。1点しかない場合はズレだけをその場で合わせる。
+// ---------- カラオケ表示エリアのスワイプ操作（下スワイプで通り過ぎた歌詞にさかのぼる） ----------
+(function setupLyricsSwipeGesture(){
+  let dragStartY = null;
+  const STEP_PX = 45;
+
+  function handleStart(y){ dragStartY = y; }
+  function handleMove(y){
+    if(dragStartY === null || state.lyricsMode !== 'tracking') return;
+    const dy = y - dragStartY;
+    if(Math.abs(dy) < STEP_PX) return;
+    const dir = dy > 0 ? -1 : 1; // 下スワイプ(dy>0)で過去へ、上スワイプで現在方向へ戻る
+    const minOffset = -(state.karaokeActiveIndex);
+    const maxOffset = (state.lyrics.length - 1) - state.karaokeActiveIndex;
+    const nextOffset = Math.max(minOffset, Math.min(maxOffset, state.manualLineOffset + dir));
+    if(nextOffset !== state.manualLineOffset){
+      state.manualLineOffset = nextOffset;
+      renderKaraokeWindow(state.karaokeActiveIndex);
+    }
+    dragStartY = y;
+  }
+  function handleEnd(){ dragStartY = null; }
+
+  el.karaokeLines.addEventListener('touchstart', e => handleStart(e.touches[0].clientY), { passive: true });
+  el.karaokeLines.addEventListener('touchmove', e => handleMove(e.touches[0].clientY), { passive: true });
+  el.karaokeLines.addEventListener('touchend', handleEnd);
+  el.karaokeLines.addEventListener('mousedown', e => handleStart(e.clientY));
+  window.addEventListener('mousemove', e => { if(dragStartY !== null) handleMove(e.clientY); });
+  window.addEventListener('mouseup', handleEnd);
+})();
+
 function resyncToLine(i){
   if(!state.player || !state.player.getCurrentTime) return;
   const line = state.lyrics[i];
   if(!line) return;
+  state.manualLineOffset = 0; // タップで同期し直したら、さかのぼり表示は解除する
   const videoTime = state.player.getCurrentTime();
 
   state.calibrationTaps.push({ videoTime, lyricTime: line.time });
@@ -1545,6 +1634,7 @@ function loadBgBrightness(){
   return isFinite(stored) ? stored : 0.75;
 }
 applyBgBrightness(loadBgBrightness());
+applyLyricsMode(loadLyricsMode());
 el.bgBrightnessSlider.addEventListener('input', () => applyBgBrightness(parseFloat(el.bgBrightnessSlider.value)));
 el.bgBrightnessSliderMini.addEventListener('input', () => applyBgBrightness(parseFloat(el.bgBrightnessSliderMini.value)));
 

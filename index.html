@@ -114,10 +114,15 @@
     </div>
 
     <div class="karaoke-body">
+      <div class="lyrics-mode-toggle">
+        <button type="button" id="mode-tracking-btn" class="lyrics-mode-btn is-active">🎤 追いかける表示</button>
+        <button type="button" id="mode-full-btn" class="lyrics-mode-btn">📜 歌詞全体を表示</button>
+      </div>
       <div id="karaoke-status" class="karaoke-status"></div>
       <div id="lyric-candidates" class="lyric-candidates"></div>
       <div id="karaoke-lines" class="karaoke-lines"></div>
-      <p class="karaoke-tap-hint">ズレていたら、合っている行を <strong>タップ</strong> してください</p>
+      <div id="full-lyrics-view" class="full-lyrics-view hidden"></div>
+      <p id="karaoke-tap-hint" class="karaoke-tap-hint">ズレていたら、合っている行を <strong>タップ</strong> してください</p>
     </div>
   </section>
 
