@@ -46,6 +46,7 @@ const el = {
   apiKeyCancel: document.getElementById('api-key-cancel'),
   settingsCloseX: document.getElementById('settings-close-x'),
   apiKeyList: document.getElementById('api-key-list'),
+  syncUsernameInput: document.getElementById('sync-username-input'),
   syncPasswordInput: document.getElementById('sync-password-input'),
   syncExportBtn: document.getElementById('sync-export-btn'),
   syncImportBtn: document.getElementById('sync-import-btn'),
@@ -234,8 +235,131 @@ el.apiKeyAddBtn.addEventListener('click', () => {
 });
 
 // ---------- 他の端末との共有（パスワードで暗号化したファイルをGitHub経由でやり取りする） ----------
-const SYNC_FILE_NAME = 'keys.enc.json';
+// Firebaseプロジェクトを作成後、以下2つを実際の値に置き換えてください
+// （Firebase Console → プロジェクトの設定 → 全般 → マイアプリ、で確認できます）
+const FIREBASE_PROJECT_ID = 'karaoke-radio-1';
+const FIREBASE_API_KEY = 'AIzaSyCQu5g9_46RTOCExtSbI55ct4Uvf8bB-ak';
+const SYNC_USERNAME_KEY = 'kr_sync_username';
 
+function firestoreDocUrl(username){
+  return `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/sharedKeys/${encodeURIComponent(username)}?key=${FIREBASE_API_KEY}`;
+}
+
+// ユーザー名に対応するデータを取得する（存在しない場合は null）
+async function firestoreGetPayload(username){
+  const res = await fetch(firestoreDocUrl(username));
+  if(res.status === 404) return null;
+  if(!res.ok) throw new Error('firestore read failed');
+  const json = await res.json();
+  return json.fields?.data?.stringValue || null;
+}
+
+// ユーザー名に対応するデータを保存する（新規作成・上書きどちらも可）
+async function firestoreSetPayload(username, payload){
+  const res = await fetch(firestoreDocUrl(username), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { data: { stringValue: payload } } }),
+  });
+  if(!res.ok) throw new Error('firestore write failed');
+}
+
+if(el.syncUsernameInput){
+  el.syncUsernameInput.value = localStorage.getItem(SYNC_USERNAME_KEY) || '';
+}
+
+el.syncExportBtn.addEventListener('click', async () => {
+  const username = el.syncUsernameInput.value.trim();
+  let password = el.syncPasswordInput.value;
+  if(!username){
+    el.syncStatus.textContent = 'ユーザー名を入力してください。';
+    return;
+  }
+  if(!password){
+    password = window.prompt('パスワードを入力してください:') || '';
+    el.syncPasswordInput.value = password;
+  }
+  if(!password){
+    el.syncStatus.textContent = 'パスワードを入力してください。';
+    return;
+  }
+  if(!state.apiKeys.length){
+    el.syncStatus.textContent = '書き出すAPIキーがありません。先にキーを追加してください。';
+    return;
+  }
+
+  el.syncStatus.textContent = 'ユーザー名を確認しています…';
+  try{
+    // すでに同じユーザー名のデータが存在する場合、同じパスワードで復号できるかを確認する
+    // （復号できれば本人、できなければ他人が使用中とみなして拒否する＝実質的な重複防止）
+    const existingPayload = await firestoreGetPayload(username);
+    if(existingPayload){
+      try{
+        await decryptApiKeys(password, existingPayload);
+      } catch(e){
+        el.syncStatus.textContent = 'このユーザー名は既に使用されています。別のユーザー名を選んでください。';
+        return;
+      }
+    }
+
+    el.syncStatus.textContent = '暗号化してサーバーへ保存しています…';
+    const payload = await encryptApiKeys(password);
+    await firestoreSetPayload(username, payload);
+    localStorage.setItem(SYNC_USERNAME_KEY, username);
+    el.syncStatus.textContent = `「${username}」として保存しました。他の端末では同じユーザー名とパスワードで読み込めます。`;
+  } catch(e){
+    el.syncStatus.textContent = 'サーバーへの保存に失敗しました。Firebaseの設定を確認してください。';
+  }
+});
+
+el.syncImportBtn.addEventListener('click', async () => {
+  const username = el.syncUsernameInput.value.trim();
+  let password = el.syncPasswordInput.value;
+  if(!username){
+    el.syncStatus.textContent = 'ユーザー名を入力してください。';
+    return;
+  }
+  if(!password){
+    password = window.prompt('パスワードを入力してください:') || '';
+    el.syncPasswordInput.value = password;
+  }
+  if(!password){
+    el.syncStatus.textContent = 'パスワードを入力してください。';
+    return;
+  }
+
+  el.syncStatus.textContent = 'サーバーから読み込んでいます…';
+  try{
+    const existingPayload = await firestoreGetPayload(username);
+    if(!existingPayload){
+      el.syncStatus.textContent = 'そのユーザー名のデータは見つかりませんでした。';
+      return;
+    }
+    const importedKeys = await decryptApiKeys(password, existingPayload);
+    if(!Array.isArray(importedKeys)) throw new Error('invalid format');
+
+    let addedCount = 0;
+    importedKeys.forEach(k => {
+      if(k && !state.apiKeys.includes(k)){
+        state.apiKeys.push(k);
+        addedCount++;
+      }
+    });
+    saveApiKeys();
+    renderApiKeyList();
+    localStorage.setItem(SYNC_USERNAME_KEY, username);
+    el.syncStatus.textContent = addedCount > 0
+      ? `${addedCount}件のAPIキーを取り込みました。`
+      : 'すでにすべてのキーが登録済みでした。';
+    if(el.historyThumbGrid && !el.historyThumbGrid.children.length){
+      renderHistoryThumbnailGrid();
+    }
+  } catch(e){
+    el.syncStatus.textContent = 'パスワードが違うか、データが壊れているため読み込めませんでした。';
+  }
+});
+
+// ---------- 暗号化ヘルパー ----------
 function bufToBase64(buf){
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
@@ -273,77 +397,6 @@ async function decryptApiKeys(password, payload){
   const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
   return JSON.parse(new TextDecoder().decode(plainBuf));
 }
-
-el.syncExportBtn.addEventListener('click', async () => {
-  let password = el.syncPasswordInput.value;
-  if(!password){
-    password = window.prompt('共有用パスワードを入力してください（他の端末でも同じものを使用します）:') || '';
-    el.syncPasswordInput.value = password;
-  }
-  if(!password){
-    el.syncStatus.textContent = 'パスワードを入力してください。';
-    return;
-  }
-  if(!state.apiKeys.length){
-    el.syncStatus.textContent = '書き出すAPIキーがありません。先にキーを追加してください。';
-    return;
-  }
-  el.syncStatus.textContent = '暗号化しています…';
-  try{
-    const payload = await encryptApiKeys(password);
-    const blob = new Blob([JSON.stringify({ data: payload })], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = SYNC_FILE_NAME;
-    a.click();
-    URL.revokeObjectURL(url);
-    el.syncStatus.textContent = `「${SYNC_FILE_NAME}」をダウンロードしました。GitHubのindex.htmlと同じ場所にアップロードしてください。`;
-  } catch(e){
-    el.syncStatus.textContent = '暗号化に失敗しました。';
-  }
-});
-
-el.syncImportBtn.addEventListener('click', async () => {
-  let password = el.syncPasswordInput.value;
-  if(!password){
-    password = window.prompt('共有用パスワードを入力してください:') || '';
-    el.syncPasswordInput.value = password;
-  }
-  if(!password){
-    el.syncStatus.textContent = 'パスワードを入力してください。';
-    return;
-  }
-  el.syncStatus.textContent = '共有ファイルを探しています…';
-  try{
-    const res = await fetch(`./${SYNC_FILE_NAME}?t=${Date.now()}`);
-    if(!res.ok){
-      el.syncStatus.textContent = `「${SYNC_FILE_NAME}」が見つかりませんでした。先に別の端末で書き出し、GitHubにアップロードしてください。`;
-      return;
-    }
-    const json = await res.json();
-    const importedKeys = await decryptApiKeys(password, json.data);
-    if(!Array.isArray(importedKeys)) throw new Error('invalid format');
-
-    let addedCount = 0;
-    importedKeys.forEach(k => {
-      if(k && !state.apiKeys.includes(k)){
-        state.apiKeys.push(k);
-        addedCount++;
-      }
-    });
-    saveApiKeys();
-    renderApiKeyList();
-    el.syncStatus.textContent = addedCount > 0
-      ? `${addedCount}件のAPIキーを取り込みました。`
-      : 'すでにすべてのキーが登録済みでした。';
-    if(el.historyThumbGrid && !el.historyThumbGrid.children.length){
-      renderHistoryThumbnailGrid();
-    }
-  } catch(e){
-    el.syncStatus.textContent = 'パスワードが違うか、ファイルが壊れているため読み込めませんでした。';
-  }
-});
 
 // ---------- 検索履歴 ----------
 function getSearchHistory(){

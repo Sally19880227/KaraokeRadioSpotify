@@ -161,18 +161,20 @@
       <span>明るい</span>
     </div>
 
+
     <hr class="modal-divider">
-    <h3 class="modal-subheading">他の端末と共有する</h3>
+    <h3 class="modal-subheading">端末間の同期（クラウド保存方式）</h3>
     <p class="modal-desc">
-      パスワードを決めて「書き出す」と、暗号化されたファイル(<code>keys.enc.json</code>)がダウンロードされます。
-      これをGitHubリポジトリの<code>index.html</code>と同じ場所にアップロードしておくと、
-      他の端末では同じパスワードを入力して「読み込む」を押すだけでAPIキーを取得できます。
-      ※自動で同期されるわけではなく、キーを追加・変更するたびに書き出し直してアップロードし直す必要があります。
+      ユーザー名とパスワードを決めてください。「サーバーへ書き出す」を押すと、暗号化したAPIキーが
+      そのユーザー名でクラウドに保存されます。他の端末では、同じユーザー名とパスワードを入力して
+      「サーバーから読み込む」を押すだけでAPIキーが取り込まれます。ファイルのやり取りは不要です。<br>
+      ※ユーザー名は先着順です。既に他の人が使っているユーザー名（違うパスワード）は使用できません。
     </p>
-    <input id="sync-password-input" type="password" placeholder="共有用パスワード（他の端末でも同じものを使用）">
+    <input id="sync-username-input" type="text" placeholder="ユーザー名（半角英数字推奨）" autocomplete="username">
+    <input id="sync-password-input" type="password" placeholder="パスワード" autocomplete="current-password">
     <div class="modal-actions">
-      <button id="sync-export-btn" class="ghost-btn">🔒 暗号化して書き出す</button>
-      <button id="sync-import-btn" class="ghost-btn">🔓 共有ファイルから読み込む</button>
+      <button id="sync-export-btn" class="ghost-btn">☁️ サーバーへ書き出す</button>
+      <button id="sync-import-btn" class="ghost-btn">☁️ サーバーから読み込む</button>
     </div>
     <p id="sync-status" class="setup-status"></p>
   </div>
