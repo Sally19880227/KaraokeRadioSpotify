@@ -1279,7 +1279,7 @@ function renderFullLyricsView(activeIdx){
       const div = document.createElement('div');
       div.className = 'full-lyrics-line';
       div.textContent = line.text;
-      div.addEventListener('click', () => jumpToLine(i));
+      div.addEventListener('click', () => resyncToLine(i));
       container.appendChild(div);
     });
   }
