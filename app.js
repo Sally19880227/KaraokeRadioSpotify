@@ -1273,36 +1273,39 @@ function renderFullLyricsView(activeIdx){
     return;
   }
   // すでに同じ曲ぶんの行が描画済みなら作り直さず、ハイライトだけ更新する
-  if(container.children.length !== state.lyrics.length){
+  if(container.dataset.lineCount != state.lyrics.length){
     container.innerHTML = '';
-    state.lyrics.forEach((line, i) => {
-      const div = document.createElement('div');
-      div.className = 'full-lyrics-line';
-      div.textContent = line.text;
-      div.addEventListener('click', () => resyncToLine(i));
-      container.appendChild(div);
-    });
+    container.dataset.lineCount = state.lyrics.length;
+
+    const columnCount = 4;
+    const perColumn = Math.ceil(state.lyrics.length / columnCount);
+    for(let c = 0; c < columnCount; c++){
+      const colDiv = document.createElement('div');
+      colDiv.className = 'full-lyrics-column';
+      const start = c * perColumn;
+      const end = Math.min(state.lyrics.length, start + perColumn);
+      for(let i = start; i < end; i++){
+        const div = document.createElement('div');
+        div.className = 'full-lyrics-line';
+        div.textContent = state.lyrics[i].text;
+        div.dataset.index = i;
+        div.addEventListener('click', () => resyncToLine(i));
+        colDiv.appendChild(div);
+      }
+      container.appendChild(colDiv);
+    }
   }
-  [...container.children].forEach((div, i) => {
+
+  container.querySelectorAll('.full-lyrics-line').forEach(div => {
+    const i = parseInt(div.dataset.index, 10);
     const active = i === activeIdx;
     div.classList.toggle('is-active', active);
-    // 段組み(column-count)レイアウト内ではクラス変更だけだと再描画されないことがあるため、
-    // インラインスタイルも直接指定して確実に見た目へ反映させる
-    if(active){
-      div.style.color = 'var(--gold)';
-      div.style.fontWeight = '700';
-    } else {
-      div.style.color = '';
-      div.style.fontWeight = '';
-    }
+    div.style.color = active ? 'var(--gold)' : '';
+    div.style.fontWeight = active ? '700' : '';
   });
-  // さらに、コンテナ全体を一度非表示→再表示することで強制的にレイアウトし直させる
-  container.style.display = 'none';
-  void container.offsetHeight;
-  container.style.display = '';
 
-  const activeEl = container.children[activeIdx];
-  if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  const activeEl = container.querySelector(`.full-lyrics-line[data-index="${activeIdx}"]`);
+  if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function renderKaraokeWindow(idx){

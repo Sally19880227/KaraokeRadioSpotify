@@ -252,13 +252,13 @@ button{ font-family:inherit; cursor:pointer; }
 
 .full-lyrics-view{
   width:100%; max-width:none; height:62vh; margin-bottom:24px;
-  column-count:4; column-gap:24px; column-fill:auto;
-  overflow-x:auto; overflow-y:hidden;
+  display:grid; grid-template-columns: repeat(4, 1fr); gap:0 24px;
+  overflow-y:auto; overflow-x:hidden;
   padding: 10px 3vw; -webkit-overflow-scrolling:touch;
 }
+.full-lyrics-column{ display:flex; flex-direction:column; min-width:0; }
 .full-lyrics-line{
   font-size: clamp(11px, 1.6vw, 15px); line-height:1.7; color: var(--text-dim);
-  break-inside: avoid;
   padding: 2px 8px; border-radius:6px; cursor:pointer; transition: color .2s ease, background-color .2s ease;
 }
 .full-lyrics-line:hover{ background: rgba(255,255,255,0.06); }
