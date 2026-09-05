@@ -537,7 +537,7 @@ button{ font-family:inherit; cursor:pointer; }
 .brightness-row span{ font-size:11.5px; color: var(--text-dim); flex-shrink:0; }
 .brightness-row input[type=range]{ flex:1; accent-color: var(--accent); }
 .modal-subheading{ font-family:'Sora'; font-size:14px; margin:0 0 10px; color: var(--text); }
-#sync-password-input{
+#sync-username-input, #sync-password-input{
   width:100%; background: var(--bg); border:1px solid var(--line); color:var(--text);
   padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:14px; outline:none;
 }
