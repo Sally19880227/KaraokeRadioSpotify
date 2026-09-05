@@ -1284,12 +1284,22 @@ function renderFullLyricsView(activeIdx){
     });
   }
   [...container.children].forEach((div, i) => {
-    div.classList.toggle('is-active', i === activeIdx);
+    const active = i === activeIdx;
+    div.classList.toggle('is-active', active);
+    // 段組み(column-count)レイアウト内ではクラス変更だけだと再描画されないことがあるため、
+    // インラインスタイルも直接指定して確実に見た目へ反映させる
+    if(active){
+      div.style.color = 'var(--gold)';
+      div.style.fontWeight = '700';
+    } else {
+      div.style.color = '';
+      div.style.fontWeight = '';
+    }
   });
-  // 段組み(column-count)レイアウト内では、クラス変更が画面に反映されず
-  // 再描画されないことがあるため、強制的にリフローさせる
+  // さらに、コンテナ全体を一度非表示→再表示することで強制的にレイアウトし直させる
+  container.style.display = 'none';
   void container.offsetHeight;
-  container.style.transform = 'translateZ(0)';
+  container.style.display = '';
 
   const activeEl = container.children[activeIdx];
   if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
