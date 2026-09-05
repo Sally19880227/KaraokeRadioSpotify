@@ -421,6 +421,60 @@ document.querySelectorAll('.suggest-chip[data-q]').forEach(btn => {
 });
 
 // 「今人気の曲」：YouTubeの急上昇（音楽カテゴリ）チャートを使う。search.listより消費クォータが少ない
+// 人気アーティストのクリックチップ（タップするだけでそのアーティスト名を検索する）
+const POPULAR_ARTISTS = [
+  'あいみょん', 'Official髭男dism', 'King Gnu', 'YOASOBI', 'Mrs. GREEN APPLE',
+  'back number', 'RADWIMPS', '米津玄師', 'Aimer', 'ヨルシカ',
+  'ずっと真夜中でいいのに。', '藤井風', 'Vaundy', 'Ado', '緑黄色社会',
+  'サザンオールスターズ', '宇多田ヒカル', 'スピッツ', 'いきものがかり', '西野カナ',
+  'SEKAI NO OWARI', 'ONE OK ROCK', 'aiko', 'Mrs.GREEN APPLE', '菅田将暉',
+  'あいうえお', 'YUI', '安室奈美恵', '浜崎あゆみ', 'MISIA',
+  '福山雅治', 'B\'z', 'GLAY', 'L\'Arc〜en〜Ciel', 'Mr.Children',
+  '槇原敬之', '中島みゆき', '松任谷由実', '井上陽水', 'ゆず',
+  'コブクロ', 'flumpool', 'マカロニえんぴつ', 'あの', 'Creepy Nuts',
+  '優里', 'ヒゲダン', 'Da-iCE', 'NEWS', '嵐',
+  'SMAP', 'AKB48', '乃木坂46', '欅坂46', 'Perfume',
+  'きゃりーぱみゅぱみゅ', 'BABYMETAL', 'RADWIMPS', 'DISH//', '菅田将暉',
+  'あいみょん', '10-FEET', 'UVERworld', 'FUNKY MONKEY BABYS', 'GReeeeN',
+  '大原櫻子', 'miwa', 'JUJU', '絢香', '平井堅',
+];
+const uniqueArtists = [...new Set(POPULAR_ARTISTS)];
+const ARTIST_INITIAL_COUNT = 16;
+
+const artistChipRow = document.getElementById('artist-chip-row');
+const artistToggleBtn = document.getElementById('artist-toggle-btn');
+
+function buildArtistChip(name){
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'suggest-chip';
+  btn.textContent = name;
+  btn.addEventListener('click', () => {
+    el.searchInput.value = name;
+    el.searchForm.dispatchEvent(new Event('submit', { cancelable: true }));
+  });
+  return btn;
+}
+
+uniqueArtists.forEach((name, i) => {
+  const chip = buildArtistChip(name);
+  if(i >= ARTIST_INITIAL_COUNT) chip.classList.add('extra-artist-chip', 'hidden');
+  artistChipRow.appendChild(chip);
+});
+
+if(uniqueArtists.length > ARTIST_INITIAL_COUNT){
+  artistToggleBtn.classList.remove('hidden');
+  artistToggleBtn.textContent = `もっと見る（+${uniqueArtists.length - ARTIST_INITIAL_COUNT}）`;
+  artistToggleBtn.addEventListener('click', () => {
+    const hiddenChips = artistChipRow.querySelectorAll('.extra-artist-chip.hidden');
+    const isExpanding = hiddenChips.length > 0;
+    artistChipRow.querySelectorAll('.extra-artist-chip').forEach(chip => {
+      chip.classList.toggle('hidden', !isExpanding);
+    });
+    artistToggleBtn.textContent = isExpanding ? '閉じる' : `もっと見る（+${uniqueArtists.length - ARTIST_INITIAL_COUNT}）`;
+  });
+}
+
 document.getElementById('trending-chip').addEventListener('click', async () => {
   showResultsView();
   el.historyThumbSection.classList.add('hidden');
