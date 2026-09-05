@@ -1283,7 +1283,7 @@ function renderFullLyricsView(activeIdx){
     div.classList.toggle('is-active', i === activeIdx);
   });
   const activeEl = container.children[activeIdx];
-  if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 function renderKaraokeWindow(idx){

@@ -251,12 +251,15 @@ button{ font-family:inherit; cursor:pointer; }
 .lyrics-mode-btn.is-active{ background: var(--gold); border-color: var(--gold); color:#0c0c10; }
 
 .full-lyrics-view{
-  width:100%; max-width:none; flex:1; max-height:74vh; overflow-y:auto;
-  padding: 10px 4vw; -webkit-overflow-scrolling:touch;
+  width:100%; max-width:none; flex:1; height:100%;
+  column-count:4; column-gap:24px; column-fill:auto;
+  overflow-x:auto; overflow-y:hidden;
+  padding: 10px 3vw; -webkit-overflow-scrolling:touch;
 }
 .full-lyrics-line{
-  font-size: clamp(13px, 2.4vw, 20px); line-height:1.9; color: var(--text-dim);
-  padding: 3px 10px; border-radius:8px; cursor:pointer; transition: color .2s ease, background-color .2s ease;
+  font-size: clamp(11px, 1.6vw, 15px); line-height:1.7; color: var(--text-dim);
+  break-inside: avoid;
+  padding: 2px 8px; border-radius:6px; cursor:pointer; transition: color .2s ease, background-color .2s ease;
 }
 .full-lyrics-line:hover{ background: rgba(255,255,255,0.06); }
 .full-lyrics-line.is-active{
