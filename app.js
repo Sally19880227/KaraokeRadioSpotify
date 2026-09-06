@@ -1,4 +1,4 @@
-/* Karaoke Radio — 動画は表示せず、音声+カラオケ歌詞のみのプレイヤー */
+/* TesKara — 動画は表示せず、音声+カラオケ歌詞のみのプレイヤー */
 
 const API_BASE = 'https://www.googleapis.com/youtube/v3';
 const REGION = 'JP';
@@ -237,8 +237,8 @@ el.apiKeyAddBtn.addEventListener('click', () => {
 // ---------- 他の端末との共有（パスワードで暗号化したファイルをGitHub経由でやり取りする） ----------
 // Firebaseプロジェクトを作成後、以下2つを実際の値に置き換えてください
 // （Firebase Console → プロジェクトの設定 → 全般 → マイアプリ、で確認できます）
-const FIREBASE_PROJECT_ID = 'karaoke-radio-1';
-const FIREBASE_API_KEY = 'AIzaSyCQu5g9_46RTOCExtSbI55ct4Uvf8bB-ak';
+const FIREBASE_PROJECT_ID = 'YOUR_FIREBASE_PROJECT_ID';
+const FIREBASE_API_KEY = 'YOUR_FIREBASE_API_KEY';
 const SYNC_USERNAME_KEY = 'kr_sync_username';
 
 function firestoreDocUrl(username){
@@ -537,31 +537,6 @@ if(uniqueArtists.length > ARTIST_INITIAL_COUNT){
     artistToggleBtn.textContent = isExpanding ? '閉じる' : `もっと見る（+${uniqueArtists.length - ARTIST_INITIAL_COUNT}）`;
   });
 }
-
-document.getElementById('trending-chip').addEventListener('click', async () => {
-  markChipSelected(document.getElementById('trending-chip'));
-  showResultsView();
-  el.historyThumbSection.classList.add('hidden');
-  el.resultsHeading.classList.remove('hidden');
-  el.resultsHeading.textContent = '🔥 今人気の曲';
-  el.resultsList.innerHTML = '';
-  el.loadMore.classList.add('hidden');
-  showStatus('読み込み中…');
-
-  const data = await ytFetch('videos', {
-    part: 'snippet', chart: 'mostPopular', videoCategoryId: '10', regionCode: 'JP', maxResults: 25,
-  });
-  if(!data) return;
-  const tracks = (data.items || []).map(it => ({
-    id: it.id,
-    title: it.snippet.title,
-    channel: it.snippet.channelTitle,
-    thumb: it.snippet.thumbnails?.medium?.url || it.snippet.thumbnails?.default?.url,
-  }));
-  state.currentList = tracks;
-  tracks.forEach(v => el.resultsList.appendChild(buildResultCard(v)));
-  showStatus(tracks.length ? '' : '取得できませんでした。');
-});
 
 async function ytFetch(path, params, attempt = 0){
   const activeKey = getActiveApiKey();

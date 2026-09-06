@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Karaoke Radio — 歌詞カラオケ専用プレイヤー</title>
+<title>TesKara — 歌詞カラオケ専用プレイヤー</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
   <header class="topbar">
     <button id="brand-home-btn" class="brand" aria-label="ホームに戻る">
       <span class="brand-mark">🎤</span>
-      <span class="brand-name">Karaoke Radio</span>
+      <span class="brand-name">TesKara</span>
     </button>
 
     <form id="search-form" class="search-form" autocomplete="off">
@@ -28,20 +28,6 @@
     <span class="search-history-label">最近の検索:</span>
     <div id="search-history-chips" class="search-history-chips"></div>
     <button id="search-history-clear" class="search-history-clear">履歴を消去</button>
-  </div>
-
-  <div id="suggested-keywords" class="search-history">
-    <span class="search-history-label">おすすめ:</span>
-    <div class="search-history-chips">
-      <button type="button" class="suggest-chip" id="trending-chip">🔥 今人気の曲</button>
-      <button type="button" class="suggest-chip" data-q="2020年代 ヒット曲">2020年代ヒット</button>
-      <button type="button" class="suggest-chip" data-q="2010年代 J-POP 名曲">2010年代J-POP</button>
-      <button type="button" class="suggest-chip" data-q="2000年代 J-POP 名曲">2000年代J-POP</button>
-      <button type="button" class="suggest-chip" data-q="90年代 J-POP 名曲">90年代J-POP</button>
-      <button type="button" class="suggest-chip" data-q="80年代 シティポップ 名曲">80年代シティポップ</button>
-      <button type="button" class="suggest-chip" data-q="昭和 歌謡曲 名曲">昭和歌謡</button>
-      <button type="button" class="suggest-chip" data-q="アニメソング 人気">アニメソング</button>
-    </div>
   </div>
 
   <div id="suggested-artists" class="search-history">
@@ -144,6 +130,9 @@
     <div id="api-key-list" class="api-key-list"></div>
     <a href="https://console.cloud.google.com/flows/enableapi?apiid=youtube.googleapis.com" target="_blank" rel="noopener" class="quick-get-key-link">
       🚀 新しいAPIキーをすぐに取得する（Google Cloudのウィザードを開く）
+    </a>
+    <a href="./api_key_guide.pdf" target="_blank" rel="noopener" class="quick-get-key-link pdf-link">
+      📄 取得〜設定の手順ガイド（PDF）を見る
     </a>
     <div class="api-key-add-row">
       <input id="api-key-input" type="text" placeholder="新しいAPIキーを追加">
