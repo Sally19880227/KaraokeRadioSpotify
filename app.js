@@ -1639,7 +1639,6 @@ function regeneratePitchTrack(bumpedKey){
   if(!el.pitchTrackBase || !el.pitchTrackColor) return;
   el.pitchTrackBase.innerHTML = '';
   el.pitchTrackColor.innerHTML = '';
-  const colors = ['', 'c-green', 'c-pink', 'c-blue'];
   const pillCount = 11 + Math.floor(Math.random() * 7); // 11〜17個（大きめのブロックにするため数は少なめ）
 
   // ところどころに空白（フレーズの切れ目）を入れる位置を決める
@@ -1658,11 +1657,12 @@ function regeneratePitchTrack(bumpedKey){
     iconPositions.set(idx, key);
   }
 
-  // レインボーのキラキラを付与する箇所を、ところどころに複数決める（かなり多め・派手に）
+  // キラキラは実機同様、現在位置付近にごく少数だけ出す（バー全体に散らばらせない）
   const sparklePositions = new Set();
-  const sparkleRatio = 0.75 + Math.random() * 0.2; // ブロックの75〜95%程度に付与
-  for(let i = 0; i < pillCount; i++){
-    if(!gapPositions.has(i) && Math.random() < sparkleRatio) sparklePositions.add(i);
+  const sparkleCount = 1 + Math.floor(Math.random() * 2); // 1〜2箇所のみ
+  for(let n = 0; n < sparkleCount; n++){
+    const idx = Math.floor(Math.random() * pillCount);
+    if(!gapPositions.has(idx)) sparklePositions.add(idx);
   }
 
   // 階段状の高さレベルを作る：同じ高さがしばらく続き（直線区間）、時々上下にジャンプする。
@@ -1689,7 +1689,6 @@ function regeneratePitchTrack(bumpedKey){
     const isLarge = Math.random() < 0.45;
     const flex = isGap ? '0.5 1 auto' : (isLarge ? `${(2.4 + Math.random() * 1.4).toFixed(2)} 1 auto` : `${(1.1 + Math.random() * 0.7).toFixed(2)} 1 auto`);
     const marginTop = isGap ? '0' : `${Math.round((level / (levelCount - 1)) * maxOffsetPx)}px`;
-    const colorClass = (!isGap && Math.random() >= 0.8) ? colors[Math.floor(Math.random() * colors.length)] : '';
 
     // 同じ形状・同じ高さのブロックを、グレー版とカラー版の両方に同一データで生成する
     const basePill = document.createElement('div');
@@ -1698,7 +1697,7 @@ function regeneratePitchTrack(bumpedKey){
     basePill.style.marginTop = marginTop;
 
     const colorPill = document.createElement('div');
-    colorPill.className = `pitch-pill ${isGap ? 'is-gap' : colorClass}`;
+    colorPill.className = `pitch-pill ${isGap ? 'is-gap' : ''}`;
     colorPill.style.flex = flex;
     colorPill.style.marginTop = marginTop;
 
