@@ -67,13 +67,19 @@
         <div id="karaoke-artist" class="karaoke-artist"></div>
       </div>
       <div id="sync-hint" class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
+      <div class="lyrics-mode-toggle">
+        <button type="button" id="mode-tracking-btn" class="lyrics-mode-btn is-active">🎤 カラオケ</button>
+        <button type="button" id="mode-full-btn" class="lyrics-mode-btn">📜 歌詞表示</button>
+      </div>
     </div>
 
     <div class="pitch-bar-wrap" id="pitch-bar-wrap">
       <div class="pitch-bar">
         <div class="pitch-track-base" id="pitch-track-base"></div>
         <div class="pitch-track-color" id="pitch-track-color"></div>
+        <div class="pitch-sweep" id="pitch-sweep"></div>
         <div class="pitch-cursor" id="pitch-cursor"></div>
+        <img src="./sparkle.png" class="pitch-cursor-trail" id="pitch-cursor-trail" alt="">
       </div>
       <div class="pitch-stats">
         <div class="pitch-stat"><img src="./icon_shakuri.png" class="stat-icon" id="stat-icon-shakuri" alt=""><span>しゃくり</span><b id="stat-shakuri">0</b></div>
@@ -89,10 +95,6 @@
     </div>
 
     <div class="karaoke-body">
-      <div class="lyrics-mode-toggle">
-        <button type="button" id="mode-tracking-btn" class="lyrics-mode-btn is-active">🎤 追いかける表示</button>
-        <button type="button" id="mode-full-btn" class="lyrics-mode-btn">📜 歌詞全体を表示</button>
-      </div>
       <div id="karaoke-status" class="karaoke-status"></div>
       <div id="lyric-candidates" class="lyric-candidates"></div>
       <div id="karaoke-lines" class="karaoke-lines"></div>

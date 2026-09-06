@@ -331,7 +331,7 @@ button{ font-family:inherit; cursor:pointer; }
   overflow:visible;
 }
 .pitch-track-base, .pitch-track-color{
-  position:absolute; inset:0; display:flex; align-items:flex-start; gap:2px; padding: 8px 10px; overflow:visible;
+  position:absolute; inset:0; display:flex; align-items:flex-start; gap:5px; padding: 8px 10px; overflow:visible;
 }
 .pitch-track-color{
   clip-path: inset(0 100% 0 0); /* 縦線が通り過ぎた分だけ、右側のクリップが減っていく */
@@ -365,6 +365,45 @@ button{ font-family:inherit; cursor:pointer; }
   content:''; position:absolute; top:-3px; left:-5px;
   width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
   border-top:8px solid #ff5e6c;
+}
+
+/* ブロックを超えるたびに飛び上がって消える小さな星 */
+.pitch-block-star{
+  position:absolute; bottom:36px; width:14px; height:14px;
+  transform: translateX(-50%);
+  pointer-events:none; z-index:4;
+  filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 8px #ffd166);
+  animation: pitchBlockStarPop .6s ease-out forwards;
+}
+@keyframes pitchBlockStarPop{
+  0%{ opacity:0; transform: translate(-50%, 0) scale(.4) rotate(0deg); }
+  25%{ opacity:1; }
+  100%{ opacity:0; transform: translate(-50%, -26px) scale(1.1) rotate(90deg); }
+}
+
+/* カーソルに追従する水色のキラキラ */
+.pitch-cursor-trail{
+  position:absolute; top:50%; width:18px; height:18px;
+  transform: translate(-50%, -50%);
+  z-index:3; pointer-events:none; opacity:0;
+  filter: drop-shadow(0 0 6px #5ecbff) drop-shadow(0 0 10px #5ecbff);
+  transition: opacity .15s ease;
+}
+
+/* 全体を通過し終える直前、左から右へ走り抜けるキラキラ */
+.pitch-sweep{
+  position:absolute; inset:0; z-index:2; pointer-events:none;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 50%, transparent 100%);
+  width:26%; left:-30%; opacity:0;
+}
+.pitch-sweep.is-sweeping{
+  animation: pitchSweepRun .5s ease-out;
+}
+@keyframes pitchSweepRun{
+  0%{ left:-30%; opacity:0; }
+  15%{ opacity:.9; }
+  85%{ opacity:.9; }
+  100%{ left:104%; opacity:0; }
 }
 
 /* しゃくり・こぶし・フォール・ビブラートを示す、バー上部のアイコン */

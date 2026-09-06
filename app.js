@@ -31,6 +31,7 @@ const state = {
   bgTimer: null,
   bgActiveLayer: 'a',
   pitchStats: { shakuri: 0, kobushi: 0, fall: 0, vibrato: 0 },
+  pitchCursorRAF: null,
   currentSegment: -1,
   seekBarTimer: null,
   isSeeking: false,
@@ -75,6 +76,9 @@ const el = {
   pitchTrackBase: document.getElementById('pitch-track-base'),
   pitchTrackColor: document.getElementById('pitch-track-color'),
   pitchCursor: document.getElementById('pitch-cursor'),
+  pitchCursorTrail: document.getElementById('pitch-cursor-trail'),
+  pitchSweep: document.getElementById('pitch-sweep'),
+  pitchBarWrap: document.getElementById('pitch-bar-wrap'),
   statShakuri: document.getElementById('stat-shakuri'),
   statKobushi: document.getElementById('stat-kobushi'),
   statFall: document.getElementById('stat-fall'),
@@ -1725,15 +1729,80 @@ function regeneratePitchTrack(bumpedKey){
 // 音程バーのカーソルと、通過後に残る虹色のキラキラの軌跡を、行の長さに合わせて左端から右端まで動かす
 function movePitchCursor(duration){
   if(!el.pitchCursor || !el.pitchTrackColor) return;
+  if(state.pitchCursorRAF) cancelAnimationFrame(state.pitchCursorRAF);
+
   el.pitchCursor.style.transition = 'none';
   el.pitchTrackColor.style.transition = 'none';
   el.pitchCursor.style.left = '0%';
   el.pitchTrackColor.style.clipPath = 'inset(0 100% 0 0)';
-  void el.pitchCursor.offsetWidth; // 強制リフロー
-  el.pitchCursor.style.transition = `left ${duration}s linear`;
-  el.pitchTrackColor.style.transition = `clip-path ${duration}s linear`;
-  el.pitchCursor.style.left = '100%';
-  el.pitchTrackColor.style.clipPath = 'inset(0 0% 0 0)';
+  if(el.pitchCursorTrail){ el.pitchCursorTrail.style.left = '0%'; el.pitchCursorTrail.style.opacity = '0'; }
+
+  // 各ブロック（ギャップ除く）の左右境界を割合(0〜1)で割り出しておく
+  const trackRect = el.pitchTrackBase.getBoundingClientRect();
+  const boundaries = Array.from(el.pitchTrackBase.querySelectorAll('.pitch-pill')).map(p => {
+    const r = p.getBoundingClientRect();
+    return {
+      start: trackRect.width ? (r.left - trackRect.left) / trackRect.width : 0,
+      end: trackRect.width ? (r.right - trackRect.left) / trackRect.width : 0,
+      isGap: p.classList.contains('is-gap'),
+    };
+  });
+
+  let lastPillIndex = -1;
+  let sweepDone = false;
+  const startTime = performance.now();
+
+  function tick(now){
+    const t = Math.min(1, (now - startTime) / (duration * 1000));
+    el.pitchCursor.style.left = `${t * 100}%`;
+    el.pitchTrackColor.style.clipPath = `inset(0 ${(1 - t) * 100}% 0 0)`;
+
+    // ブロックを1つ超えるたびに、小さな星を飛ばす
+    const idx = boundaries.findIndex(b => t >= b.start && t < b.end);
+    if(idx !== -1 && idx !== lastPillIndex){
+      lastPillIndex = idx;
+      if(!boundaries[idx].isGap) spawnBlockStar(boundaries[idx]);
+    }
+
+    // 水色のキラキラをカーソルに追従させる
+    if(el.pitchCursorTrail){
+      el.pitchCursorTrail.style.left = `${t * 100}%`;
+      el.pitchCursorTrail.style.opacity = (t > 0 && t < 1) ? '1' : '0';
+    }
+
+    // 全体を通過し終える直前に、左から右へキラキラが走る演出
+    if(!sweepDone && t > 0.8){
+      sweepDone = true;
+      triggerFullSweep();
+    }
+
+    if(t < 1){
+      state.pitchCursorRAF = requestAnimationFrame(tick);
+    } else if(el.pitchCursorTrail){
+      el.pitchCursorTrail.style.opacity = '0';
+    }
+  }
+  state.pitchCursorRAF = requestAnimationFrame(tick);
+}
+
+// ブロックを超えた瞬間、その位置から小さな星が飛び上がって消える演出
+function spawnBlockStar(boundary){
+  if(!el.pitchBarWrap) return;
+  const star = document.createElement('img');
+  star.src = './sparkle.png';
+  star.className = 'pitch-block-star';
+  star.alt = '';
+  star.style.left = `${((boundary.start + boundary.end) / 2) * 100}%`;
+  el.pitchBarWrap.appendChild(star);
+  star.addEventListener('animationend', () => star.remove());
+}
+
+// 全体を通過し終える直前に、バー全体を左から右へキラキラが走り抜ける演出
+function triggerFullSweep(){
+  if(!el.pitchSweep) return;
+  el.pitchSweep.classList.remove('is-sweeping');
+  void el.pitchSweep.offsetWidth; // 強制リフローで、連続再生でも毎回アニメーションが走るようにする
+  el.pitchSweep.classList.add('is-sweeping');
 }
 
 // しゃくり・こぶし・フォール・ビブラートのカウンターを、行が変わるたびに演出としてランダムに増やす。
