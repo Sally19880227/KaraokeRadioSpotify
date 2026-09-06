@@ -162,7 +162,8 @@ button{ font-family:inherit; cursor:pointer; }
   position:fixed; inset:0; z-index: 100;
   background:#0a0a0e;
   display:flex; flex-direction:column;
-  overflow:hidden;
+  overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
 }
 
 /* 背景の風景写真（2枚重ねでクロスフェード） */
@@ -207,8 +208,14 @@ button{ font-family:inherit; cursor:pointer; }
 .karaoke-topbar{
   display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
   padding: 16px 20px; border-bottom:1px solid var(--line); flex-shrink:0;
-  position:relative; z-index:2; background: rgba(10,10,14,0.35); backdrop-filter: blur(6px);
+  position:sticky; top:0; z-index:20; background: rgba(10,10,14,0.92); backdrop-filter: blur(6px);
 }
+.karaoke-brand{
+  display:flex; align-items:center; gap:6px;
+  background:none; border:none; padding:0; cursor:pointer; flex-shrink:0;
+}
+.karaoke-brand-icon{ width:24px; height:24px; border-radius:50%; box-shadow: 0 0 0 1px var(--line); }
+.karaoke-brand-wordmark{ height:14px; width:auto; display:block; }
 .karaoke-meta{ min-width:0; }
 .karaoke-title{
   font-size:15px; font-weight:700; color: var(--text);

@@ -698,6 +698,10 @@ el.brandHomeBtn.addEventListener('click', () => {
   }
 });
 
+document.getElementById('karaoke-brand-home-btn').addEventListener('click', () => {
+  el.brandHomeBtn.click();
+});
+
 function showResultsView(){
   el.karaokeView.classList.add('hidden');
   el.resultsView.classList.remove('hidden');
