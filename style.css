@@ -43,12 +43,12 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .brand:hover .brand-name{ color: var(--gold); }
 .brand-mark{
-  width:30px; height:30px; border-radius:50%;
+  width:42px; height:42px; border-radius:50%;
   object-fit: cover; flex-shrink:0;
   box-shadow: 0 0 0 1px var(--line);
 }
 .brand-name{ font-family:'Sora'; font-weight:800; font-size:17px; letter-spacing:-0.01em; color: var(--text); }
-.brand-name-img{ height:20px; width:auto; display:block; }
+.brand-name-img{ height:30px; width:auto; display:block; }
 
 .search-form{
   display:flex; flex:1; max-width:480px;
@@ -214,8 +214,8 @@ button{ font-family:inherit; cursor:pointer; }
   display:flex; align-items:center; gap:6px;
   background:none; border:none; padding:0; cursor:pointer; flex-shrink:0;
 }
-.karaoke-brand-icon{ width:24px; height:24px; border-radius:50%; box-shadow: 0 0 0 1px var(--line); }
-.karaoke-brand-wordmark{ height:14px; width:auto; display:block; }
+.karaoke-brand-icon{ width:36px; height:36px; border-radius:50%; box-shadow: 0 0 0 1px var(--line); }
+.karaoke-brand-wordmark{ height:22px; width:auto; display:block; }
 .karaoke-meta{ min-width:0; }
 .karaoke-title{
   font-size:15px; font-weight:700; color: var(--text);
@@ -339,9 +339,9 @@ button{ font-family:inherit; cursor:pointer; }
 
 /* しゃくり・こぶし・フォール・ビブラートを示す、バー上部のアイコン */
 .pitch-icon{
-  position:absolute; top:-22px; transform: translateX(-50%);
-  font-size:16px; font-weight:800; line-height:1;
-  filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
+  position:absolute; top:-24px; transform: translateX(-50%);
+  width:20px; height:20px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
 /* 通過済みブロックに付与する、レインボーのキラキラ */
@@ -349,9 +349,8 @@ button{ font-family:inherit; cursor:pointer; }
   position:absolute; top:-20px; left:50%; transform: translateX(-50%);
   width:58px; height:46px; pointer-events:none; z-index:2;
 }
-.pitch-sparkle-cluster i{
-  position:absolute; font-style:normal; opacity:0;
-  text-shadow: 0 0 6px currentColor;
+.pitch-sparkle-cluster img{
+  position:absolute; opacity:0;
   animation-name: pitchSparkleTwinkle;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
@@ -368,6 +367,34 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .pitch-stat{ display:flex; align-items:center; gap:6px; font-size:11.5px; color: var(--text-dim); }
 .pitch-stat b{ color: var(--text); font-size:13px; }
+.stat-icon{ width:16px; height:16px; display:inline-block; }
+#stat-icon-shakuri{ animation: iconShakuriIdle 1.3s ease-in-out infinite; }
+#stat-icon-kobushi{ animation: iconKobushiIdle 3s linear infinite; }
+#stat-icon-fall{ animation: iconFallIdle 1.5s ease-in-out infinite; }
+#stat-icon-vibrato{ animation: iconVibratoIdle 0.18s ease-in-out infinite; }
+.stat-icon.is-burst{ animation: statIconBurst .55s ease-out !important; }
+@keyframes iconShakuriIdle{
+  0%, 100%{ transform: translateY(0) rotate(0deg); }
+  50%{ transform: translateY(-2px) rotate(-10deg); }
+}
+@keyframes iconKobushiIdle{
+  from{ transform: rotate(0deg); }
+  to{ transform: rotate(360deg); }
+}
+@keyframes iconFallIdle{
+  0%, 100%{ transform: translateY(0) rotate(0deg); }
+  50%{ transform: translateY(2px) rotate(8deg); }
+}
+@keyframes iconVibratoIdle{
+  0%, 100%{ transform: translateX(0); }
+  25%{ transform: translateX(-1.5px); }
+  75%{ transform: translateX(1.5px); }
+}
+@keyframes statIconBurst{
+  0%{ transform: scale(1) rotate(0deg); }
+  35%{ transform: scale(1.8) rotate(18deg); }
+  100%{ transform: scale(1) rotate(0deg); }
+}
 .pitch-segments{ display:flex; align-items:center; gap:5px; margin-left:auto; }
 .seg-label{ font-size:11px; color: var(--text-dim); margin-right:2px; }
 .pitch-segments .seg{
@@ -439,19 +466,19 @@ button{ font-family:inherit; cursor:pointer; }
 
 /* 現在の行のまわりで瞬く、きらめきの粒 */
 .k-sparkles{ position:absolute; inset:-20% -4% auto -4%; height:140%; pointer-events:none; z-index:2; }
-.k-sparkles span{
-  position:absolute; font-size: 14px; color:#fff;
-  opacity:0; text-shadow: 0 0 8px #fff, 0 0 14px currentColor;
+.k-sparkles img{
+  position:absolute; width:16px; height:16px;
+  opacity:0;
   animation: sparkleTwinkle 2.4s ease-in-out infinite;
 }
-.k-sparkles span:nth-child(1){ left:4%;  top:20%; color:#ff9f4d; animation-delay:.1s; font-size:12px; }
-.k-sparkles span:nth-child(2){ left:14%; top:70%; color:#8cff8c; animation-delay:.9s; font-size:16px; }
-.k-sparkles span:nth-child(3){ left:28%; top:10%; color:#5ecbff; animation-delay:.4s; font-size:11px; }
-.k-sparkles span:nth-child(4){ left:46%; top:80%; color:#ffe066; animation-delay:1.3s; font-size:15px; }
-.k-sparkles span:nth-child(5){ left:62%; top:15%; color:#d68cff; animation-delay:.7s; font-size:13px; }
-.k-sparkles span:nth-child(6){ left:76%; top:65%; color:#ff5e6c; animation-delay:1.6s; font-size:16px; }
-.k-sparkles span:nth-child(7){ left:88%; top:25%; color:#8c9dff; animation-delay:.2s; font-size:12px; }
-.k-sparkles span:nth-child(8){ left:96%; top:60%; color:#fff; animation-delay:1.1s; font-size:14px; }
+.k-sparkles img:nth-child(1){ left:4%;  top:20%; animation-delay:.1s; width:13px; height:13px; filter: drop-shadow(0 0 6px #ff9f4d) drop-shadow(0 0 10px #ff9f4d); }
+.k-sparkles img:nth-child(2){ left:14%; top:70%; animation-delay:.9s; width:18px; height:18px; filter: drop-shadow(0 0 6px #8cff8c) drop-shadow(0 0 10px #8cff8c); }
+.k-sparkles img:nth-child(3){ left:28%; top:10%; animation-delay:.4s; width:12px; height:12px; filter: drop-shadow(0 0 6px #5ecbff) drop-shadow(0 0 10px #5ecbff); }
+.k-sparkles img:nth-child(4){ left:46%; top:80%; animation-delay:1.3s; width:17px; height:17px; filter: drop-shadow(0 0 6px #ffe066) drop-shadow(0 0 10px #ffe066); }
+.k-sparkles img:nth-child(5){ left:62%; top:15%; animation-delay:.7s; width:14px; height:14px; filter: drop-shadow(0 0 6px #d68cff) drop-shadow(0 0 10px #d68cff); }
+.k-sparkles img:nth-child(6){ left:76%; top:65%; animation-delay:1.6s; width:18px; height:18px; filter: drop-shadow(0 0 6px #ff5e6c) drop-shadow(0 0 10px #ff5e6c); }
+.k-sparkles img:nth-child(7){ left:88%; top:25%; animation-delay:.2s; width:13px; height:13px; filter: drop-shadow(0 0 6px #8c9dff) drop-shadow(0 0 10px #8c9dff); }
+.k-sparkles img:nth-child(8){ left:96%; top:60%; animation-delay:1.1s; width:16px; height:16px; filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 10px #fff); }
 @keyframes sparkleTwinkle{
   0%, 100%{ opacity:0; transform: scale(.4) rotate(0deg); }
   50%{ opacity:1; transform: scale(1.1) rotate(90deg); }

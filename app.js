@@ -1372,7 +1372,7 @@ function renderKaraokeWindow(idx){
       if(line){
         const sparkles = document.createElement('div');
         sparkles.className = 'k-sparkles';
-        sparkles.innerHTML = '<span>✦</span>'.repeat(8);
+        sparkles.innerHTML = '<img src="./sparkle.png" alt="">'.repeat(8);
         wrap.appendChild(sparkles);
       }
       el.karaokeLines.appendChild(wrap);
@@ -1560,26 +1560,29 @@ function updatePitchBar(idx){
 }
 
 const TECHNIQUE_ICONS = {
-  shakuri:  { symbol: '⟋',  color: '#ffb347' }, // しゃくり
-  kobushi:  { symbol: '◐',  color: '#5ecbff' }, // こぶし
-  fall:     { symbol: '⌒',  color: '#d68cff' }, // フォール
-  vibrato:  { symbol: '〰', color: '#7be07b' }, // ビブラート
+  shakuri:  { image: './icon_shakuri.png' }, // しゃくり
+  kobushi:  { image: './icon_kobushi.png' }, // こぶし
+  fall:     { image: './icon_fall.png' },    // フォール
+  vibrato:  { image: './icon_vibrato.png' }, // ビブラート
 };
 
 // 派手なレインボーのキラキラ（星）のクラスターを1つ作る
 const SPARKLE_COLORS = ['#ff5e6c', '#ff9f4d', '#ffe066', '#8cff8c', '#5ecbff', '#8c9dff', '#d68cff', '#ffffff'];
-const SPARKLE_GLYPHS = ['✦', '✧', '⋆', '✶'];
 function buildSparkleCluster(){
   const cluster = document.createElement('span');
   cluster.className = 'pitch-sparkle-cluster';
   const starCount = 7 + Math.floor(Math.random() * 5); // 7〜11個
   for(let s = 0; s < starCount; s++){
-    const star = document.createElement('i');
-    star.textContent = SPARKLE_GLYPHS[Math.floor(Math.random() * SPARKLE_GLYPHS.length)];
-    star.style.color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+    const star = document.createElement('img');
+    star.src = './sparkle.png';
+    star.alt = '';
+    const color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+    const size = 8 + Math.round(Math.random() * 7);
+    star.style.width = `${size}px`;
+    star.style.height = `${size}px`;
     star.style.left = `${Math.round(Math.random() * 40 - 4)}px`;
     star.style.top = `${Math.round(Math.random() * 30 - 14)}px`;
-    star.style.fontSize = `${10 + Math.round(Math.random() * 8)}px`;
+    star.style.filter = `drop-shadow(0 0 4px ${color}) drop-shadow(0 0 7px ${color})`;
     star.style.animationDelay = `${(Math.random() * 1.6).toFixed(2)}s`;
     star.style.animationDuration = `${(1.1 + Math.random() * 1.1).toFixed(2)}s`;
     cluster.appendChild(star);
@@ -1657,11 +1660,11 @@ function regeneratePitchTrack(bumpedKey){
 
     // アイコンは「通過済み」を示すカラー側のブロックに付与し、縦線が通り過ぎたときだけ見えるようにする
     if(iconPositions.has(i)){
-      const icon = document.createElement('span');
+      const icon = document.createElement('img');
       const meta = TECHNIQUE_ICONS[iconPositions.get(i)];
       icon.className = 'pitch-icon';
-      icon.textContent = meta.symbol;
-      icon.style.color = meta.color;
+      icon.src = meta.image;
+      icon.alt = '';
       icon.style.left = '50%';
       colorPill.appendChild(icon);
     }
@@ -1699,6 +1702,15 @@ function bumpPitchStats(){
   state.pitchStats[key]++;
   const elMap = { shakuri: el.statShakuri, kobushi: el.statKobushi, fall: el.statFall, vibrato: el.statVibrato };
   elMap[key].textContent = state.pitchStats[key];
+
+  // カウントされた瞬間、対応するアイコンを弾ませる演出
+  const iconEl = document.getElementById(`stat-icon-${key}`);
+  if(iconEl){
+    iconEl.classList.remove('is-burst');
+    void iconEl.offsetWidth; // 強制的にリフローさせ、連続で発生しても毎回アニメーションが再生されるようにする
+    iconEl.classList.add('is-burst');
+  }
+
   return key;
 }
 
