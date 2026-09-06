@@ -1748,8 +1748,21 @@ function movePitchCursor(duration){
     };
   });
 
+  // ギャップで区切られた「フレーズ区間」ごとにまとめておく（フレーズを通過し終えた時にキラキラを咲かせるため）
+  const phrases = [];
+  let segStart = null;
+  boundaries.forEach((b, i) => {
+    if(b.isGap){
+      if(segStart !== null) phrases.push({ start: segStart, end: boundaries[i - 1].end });
+      segStart = null;
+    } else if(segStart === null){
+      segStart = b.start;
+    }
+  });
+  if(segStart !== null) phrases.push({ start: segStart, end: boundaries[boundaries.length - 1].end });
+
   let lastPillIndex = -1;
-  let sweepDone = false;
+  let phraseIndex = 0;
   const startTime = performance.now();
 
   function tick(now){
@@ -1770,10 +1783,10 @@ function movePitchCursor(duration){
       el.pitchCursorTrail.style.opacity = (t > 0 && t < 1) ? '1' : '0';
     }
 
-    // 全体を通過し終える直前に、左から右へキラキラが走る演出
-    if(!sweepDone && t > 0.8){
-      sweepDone = true;
-      triggerFullSweep();
+    // フレーズ（ギャップで区切られた一区間）を通過し終えるたびに、その区間全体に色とりどりのキラキラを咲かせる
+    while(phraseIndex < phrases.length && t >= phrases[phraseIndex].end){
+      spawnPhraseBurst(phrases[phraseIndex]);
+      phraseIndex++;
     }
 
     if(t < 1){
@@ -1797,14 +1810,33 @@ function spawnBlockStar(boundary){
   star.addEventListener('animationend', () => star.remove());
 }
 
-// 全体を通過し終える直前に、バー全体を左から右へキラキラが走り抜ける演出
-function triggerFullSweep(){
-  if(!el.pitchSweep) return;
-  el.pitchSweep.classList.remove('is-sweeping');
-  void el.pitchSweep.offsetWidth; // 強制リフローで、連続再生でも毎回アニメーションが走るようにする
-  el.pitchSweep.classList.add('is-sweeping');
+// フレーズを通過し終えた瞬間、その区間全体に色とりどりの細かいキラキラをまとめて咲かせ、フェードアウトさせる演出
+const PHRASE_BURST_COLORS = ['#ff5e6c', '#ff9f4d', '#ffe066', '#8cff8c', '#5ecbff', '#8c9dff', '#d68cff', '#ffffff'];
+function spawnPhraseBurst(phrase){
+  if(!el.pitchBarWrap) return;
+  const widthPct = (phrase.end - phrase.start) * 100;
+  const particleCount = 16 + Math.floor(Math.random() * 8); // 16〜23個
+  for(let i = 0; i < particleCount; i++){
+    const p = document.createElement('img');
+    p.src = './sparkle.png';
+    p.className = 'pitch-phrase-particle';
+    p.alt = '';
+    const leftPct = (phrase.start * 100) + Math.random() * widthPct;
+    const size = 6 + Math.round(Math.random() * 10);
+    const color = PHRASE_BURST_COLORS[Math.floor(Math.random() * PHRASE_BURST_COLORS.length)];
+    p.style.left = `${leftPct}%`;
+    p.style.top = `${20 + Math.round(Math.random() * 45)}%`;
+    p.style.width = `${size}px`;
+    p.style.height = `${size}px`;
+    p.style.filter = `drop-shadow(0 0 4px ${color}) drop-shadow(0 0 7px ${color})`;
+    p.style.animationDelay = `${(Math.random() * 0.15).toFixed(2)}s`;
+    p.style.animationDuration = `${(0.7 + Math.random() * 0.5).toFixed(2)}s`;
+    el.pitchBarWrap.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
 }
 
+// 全体を通過し終える直前に、バー全体を左から右へキラキラが走り抜ける演出
 // しゃくり・こぶし・フォール・ビブラートのカウンターを、行が変わるたびに演出としてランダムに増やす。
 // 増えた項目のキー（無い場合はnull）を返す（アイコン表示に使う）
 function bumpPitchStats(){

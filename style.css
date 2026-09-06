@@ -327,7 +327,7 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .pitch-bar{
   position:relative; height:92px; width:100%;
-  background: linear-gradient(180deg, #2a1cd6, #1a10a8); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  background: rgba(20,20,28,0.55); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   overflow:visible;
 }
 .pitch-track-base, .pitch-track-color{
@@ -343,16 +343,16 @@ button{ font-family:inherit; cursor:pointer; }
 }
 /* 未通過部分：うすい灰色のブロック */
 .pitch-track-base .pitch-pill{
-  background: #e6e6f5;
-  border-top:1px solid rgba(255,255,255,0.6);
+  background: #6b6f7c;
+  border-top:1px solid rgba(255,255,255,0.25);
 }
 .pitch-track-base .pitch-pill.is-gap{ background: transparent; border-top:none; }
 
 /* 通過済み部分：実際の色（ブロックのみに色がつき、帯全体には色をつけない） */
 .pitch-track-color .pitch-pill{
-  background: #ffffff;
-  border-top:1px solid rgba(255,255,255,0.9);
-  box-shadow: 0 0 6px rgba(255,255,255,0.5);
+  background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #f2a900);
+  border-top:1px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 6px rgba(255,209,102,0.6);
 }
 .pitch-track-color .pitch-pill.is-gap{ background: transparent; box-shadow:none; border-top:none; }
 
@@ -391,19 +391,17 @@ button{ font-family:inherit; cursor:pointer; }
 }
 
 /* 全体を通過し終える直前、左から右へ走り抜けるキラキラ */
-.pitch-sweep{
-  position:absolute; inset:0; z-index:2; pointer-events:none;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 50%, transparent 100%);
-  width:26%; left:-30%; opacity:0;
+/* フレーズを通過し終えた瞬間、その区間に色とりどりの粒がパッと咲いてフェードアウトする演出 */
+.pitch-phrase-particle{
+  position:absolute; pointer-events:none; z-index:2;
+  animation-name: pitchPhraseParticlePop;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
 }
-.pitch-sweep.is-sweeping{
-  animation: pitchSweepRun .5s ease-out;
-}
-@keyframes pitchSweepRun{
-  0%{ left:-30%; opacity:0; }
-  15%{ opacity:.9; }
-  85%{ opacity:.9; }
-  100%{ left:104%; opacity:0; }
+@keyframes pitchPhraseParticlePop{
+  0%{ opacity:0; transform: scale(.3) translateY(4px); }
+  25%{ opacity:1; transform: scale(1.1) translateY(-2px); }
+  100%{ opacity:0; transform: scale(.6) translateY(-14px); }
 }
 
 /* しゃくり・こぶし・フォール・ビブラートを示す、バー上部のアイコン */
