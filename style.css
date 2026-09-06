@@ -44,10 +44,10 @@ button{ font-family:inherit; cursor:pointer; }
 .brand:hover .brand-name{ color: var(--gold); }
 .brand-mark{
   width:30px; height:30px; border-radius:50%;
-  background: var(--accent); color:#0c0c10;
-  display:flex; align-items:center; justify-content:center; font-size:14px;
+  object-fit: cover; flex-shrink:0;
+  box-shadow: 0 0 0 1px var(--line);
 }
-.brand-name{ font-family:'Sora'; font-weight:800; font-size:17px; letter-spacing:-0.01em; }
+.brand-name{ font-family:'Sora'; font-weight:800; font-size:17px; letter-spacing:-0.01em; color: var(--text); }
 
 .search-form{
   display:flex; flex:1; max-width:480px;
@@ -277,8 +277,6 @@ button{ font-family:inherit; cursor:pointer; }
 @keyframes fullLyricsRainbow{
   from{ background-position: 0% 0; }
   to{ background-position: -200% 0; }
-}
-  text-shadow: 0 0 18px var(--accent-glow);
 }
 
 /* ---------- 音程バー風の演出（実際の採点・音程判定ではない演出用UI） ---------- */
@@ -524,6 +522,8 @@ button{ font-family:inherit; cursor:pointer; }
   padding:10px 12px; border-radius:8px; font-size:12.5px; font-weight:600; margin-bottom:14px;
 }
 .quick-get-key-link:hover{ background: var(--surface); }
+.quick-get-key-link.pdf-link{ border-style:solid; border-color: var(--line); color: var(--text-dim); }
+.quick-get-key-link.pdf-link:hover{ border-color: var(--accent); color: var(--accent); }
 .api-key-add-row{ display:flex; gap:8px; margin-bottom:16px; }
 .api-key-add-row .primary-btn{ flex-shrink:0; }
 #manual-lrc-input{
