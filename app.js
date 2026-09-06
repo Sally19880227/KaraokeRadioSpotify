@@ -85,6 +85,7 @@ const el = {
   miniPlayerTitle: document.getElementById('mini-player-title'),
 
   playPauseBtn: document.getElementById('play-pause-btn'),
+  playPauseIcon: document.getElementById('play-pause-icon'),
   skipBtn: document.getElementById('skip-btn'),
   seekSlider: document.getElementById('seek-slider'),
   timeCurrent: document.getElementById('time-current'),
@@ -849,15 +850,15 @@ function onPlayerError(e){
 
 function onPlayerStateChange(e){
   if(e.data === YT.PlayerState.PLAYING){
-    el.playPauseBtn.textContent = '⏸';
+    el.playPauseIcon.src = './icon_pause.png';
     startKaraokeSyncLoop();
     startSeekBarLoop();
   } else if(e.data === YT.PlayerState.PAUSED){
-    el.playPauseBtn.textContent = '▶';
+    el.playPauseIcon.src = './icon_play.png';
     stopKaraokeSyncLoop();
     stopSeekBarLoop();
   } else if(e.data === YT.PlayerState.ENDED){
-    el.playPauseBtn.textContent = '▶';
+    el.playPauseIcon.src = './icon_play.png';
     stopKaraokeSyncLoop();
     stopSeekBarLoop();
     playNextByArtist();
