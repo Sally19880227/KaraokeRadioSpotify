@@ -1373,7 +1373,14 @@ function renderFullLyricsView(activeIdx){
   });
 
   const activeEl = container.querySelector(`.full-lyrics-line[data-index="${activeIdx}"]`);
-  if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if(activeEl){
+    // container.scrollIntoView は外側の画面ごとスクロールしてしまい、上部のバーが隠れる原因になるため、
+    // 歌詞欄(container)自身の scrollTop だけを直接動かす（座標はビューポート基準で計算し、段組みでもズレないようにする）
+    const containerRect = container.getBoundingClientRect();
+    const elRect = activeEl.getBoundingClientRect();
+    const delta = (elRect.top - containerRect.top) - (container.clientHeight / 2 - elRect.height / 2);
+    container.scrollTo({ top: Math.max(0, container.scrollTop + delta), behavior: 'smooth' });
+  }
 }
 
 function renderKaraokeWindow(idx){
