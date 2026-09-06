@@ -238,8 +238,8 @@ el.apiKeyAddBtn.addEventListener('click', () => {
 // ---------- 他の端末との共有（パスワードで暗号化したファイルをGitHub経由でやり取りする） ----------
 // Firebaseプロジェクトを作成後、以下2つを実際の値に置き換えてください
 // （Firebase Console → プロジェクトの設定 → 全般 → マイアプリ、で確認できます）
-const FIREBASE_PROJECT_ID = 'YOUR_FIREBASE_PROJECT_ID';
-const FIREBASE_API_KEY = 'YOUR_FIREBASE_API_KEY';
+const FIREBASE_PROJECT_ID = 'karaoke-radio-1';
+const FIREBASE_API_KEY = 'AIzaSyCQu5g9_46RTOCExtSbI55ct4Uvf8bB-ak';
 const SYNC_USERNAME_KEY = 'kr_sync_username';
 
 function firestoreDocUrl(username){
