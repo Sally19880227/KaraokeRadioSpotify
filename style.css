@@ -539,8 +539,8 @@ button{ font-family:inherit; cursor:pointer; }
   display:flex; align-items:center; justify-content:center;
 }
 .control-btn img{ width:24px; height:24px; display:block; }
-.control-btn-secondary{ background: var(--surface); color: var(--text); border:1px solid var(--line); width:46px; height:46px; font-size:13px; }
-.control-btn-secondary img{ width:20px; height:20px; }
+.control-btn-secondary{ background: var(--surface); color: var(--text); border:1px solid var(--line); width:56px; height:56px; font-size:13px; }
+.control-btn-secondary img{ width:24px; height:24px; }
 .control-btn-secondary img{ width:15px; height:15px; }
 .now-playing-note{ font-size:11px; color: var(--text-dim); display:none; }
 
