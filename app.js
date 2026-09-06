@@ -1577,7 +1577,7 @@ function buildSparkleCluster(){
     star.src = './sparkle.png';
     star.alt = '';
     const color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
-    const size = 8 + Math.round(Math.random() * 7);
+    const size = 16 + Math.round(Math.random() * 12);
     star.style.width = `${size}px`;
     star.style.height = `${size}px`;
     star.style.left = `${Math.round(Math.random() * 40 - 4)}px`;
