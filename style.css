@@ -327,7 +327,7 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .pitch-bar{
   position:relative; height:92px; width:100%;
-  background: rgba(20,20,28,0.55); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  background: linear-gradient(180deg, #2a1cd6, #1a10a8); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   overflow:visible;
 }
 .pitch-track-base, .pitch-track-color{
@@ -343,16 +343,16 @@ button{ font-family:inherit; cursor:pointer; }
 }
 /* 未通過部分：うすい灰色のブロック */
 .pitch-track-base .pitch-pill{
-  background: #6b6f7c;
-  border-top:1px solid rgba(255,255,255,0.25);
+  background: #e6e6f5;
+  border-top:1px solid rgba(255,255,255,0.6);
 }
 .pitch-track-base .pitch-pill.is-gap{ background: transparent; border-top:none; }
 
 /* 通過済み部分：実際の色（ブロックのみに色がつき、帯全体には色をつけない） */
 .pitch-track-color .pitch-pill{
-  background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #f2a900);
-  border-top:1px solid rgba(255,255,255,0.8);
-  box-shadow: 0 0 6px rgba(255,209,102,0.6);
+  background: #ffffff;
+  border-top:1px solid rgba(255,255,255,0.9);
+  box-shadow: 0 0 6px rgba(255,255,255,0.5);
 }
 .pitch-track-color .pitch-pill.is-gap{ background: transparent; box-shadow:none; border-top:none; }
 
