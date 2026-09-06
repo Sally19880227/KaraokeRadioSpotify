@@ -48,6 +48,7 @@ button{ font-family:inherit; cursor:pointer; }
   box-shadow: 0 0 0 1px var(--line);
 }
 .brand-name{ font-family:'Sora'; font-weight:800; font-size:17px; letter-spacing:-0.01em; color: var(--text); }
+.brand-name-img{ height:20px; width:auto; display:block; }
 
 .search-form{
   display:flex; flex:1; max-width:480px;
