@@ -66,23 +66,7 @@
         <div id="karaoke-title" class="karaoke-title">&nbsp;</div>
         <div id="karaoke-artist" class="karaoke-artist"></div>
       </div>
-      <div class="control-bar">
-        <button id="play-pause-btn" class="control-btn" aria-label="再生/一時停止">⏸</button>
-        <button id="skip-btn" class="control-btn control-btn-secondary" aria-label="次の曲へ">⏭</button>
-        <div class="seek-wrap">
-          <span id="time-current">0:00</span>
-          <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.5">
-          <span id="time-total">0:00</span>
-        </div>
-        <div id="sync-hint" class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
-      </div>
-      <div class="brightness-mini">
-        <span>🔅</span>
-        <input type="range" id="bg-brightness-slider-mini" min="0.3" max="1.3" step="0.05" value="0.75">
-        <span>🔆</span>
-      </div>
-      <button id="edit-lyrics-btn" class="karaoke-close-btn">✎ 歌詞を編集</button>
-      <button id="back-to-search-btn" class="karaoke-close-btn">🔍 検索に戻る</button>
+      <div id="sync-hint" class="now-playing-note">同じアーティストの曲を自動的に流し続けます</div>
     </div>
 
     <div class="pitch-bar-wrap" id="pitch-bar-wrap">
@@ -115,10 +99,30 @@
       <div id="full-lyrics-view" class="full-lyrics-view hidden"></div>
       <p id="karaoke-tap-hint" class="karaoke-tap-hint">ズレていたら、合っている行を <strong>タップ</strong> してください</p>
     </div>
+
+    <div class="control-bar control-bar-bottom">
+      <button id="play-pause-btn" class="control-btn" aria-label="再生/一時停止">⏸</button>
+      <button id="skip-btn" class="control-btn control-btn-secondary" aria-label="次の曲へ">⏭</button>
+      <div class="seek-wrap">
+        <span id="time-current">0:00</span>
+        <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.5">
+        <span id="time-total">0:00</span>
+      </div>
+    </div>
   </section>
 
   <!-- 動画プレイヤーは音声再生のみに使用し、画面には表示しない -->
   <div id="yt-player" class="yt-player-hidden"></div>
+
+  <!-- 検索画面に戻っても再生を止めない、右下のミニプレイヤー -->
+  <button id="mini-player" class="mini-player hidden" aria-label="再生画面に戻る">
+    <img id="mini-player-thumb" class="mini-player-thumb" alt="">
+    <div class="mini-player-info">
+      <div id="mini-player-title" class="mini-player-title"></div>
+      <div class="mini-player-hint">タップして再生画面に戻る</div>
+    </div>
+    <span class="mini-player-eq"><i></i><i></i><i></i></span>
+  </button>
 
 </div>
 

@@ -14,6 +14,7 @@ const state = {
   nextPageToken: null,
   currentList: [],
   currentIndex: -1,
+  nowPlaying: null,
   recentlyPlayedIds: [],
 
   player: null,
@@ -52,7 +53,6 @@ const el = {
   syncImportBtn: document.getElementById('sync-import-btn'),
   syncStatus: document.getElementById('sync-status'),
   bgBrightnessSlider: document.getElementById('bg-brightness-slider'),
-  bgBrightnessSliderMini: document.getElementById('bg-brightness-slider-mini'),
 
   searchHistory: document.getElementById('search-history'),
   searchHistoryChips: document.getElementById('search-history-chips'),
@@ -80,7 +80,9 @@ const el = {
   statFall: document.getElementById('stat-fall'),
   statVibrato: document.getElementById('stat-vibrato'),
   pitchSegments: document.getElementById('pitch-segments'),
-  backToSearchBtn: document.getElementById('back-to-search-btn'),
+  miniPlayer: document.getElementById('mini-player'),
+  miniPlayerThumb: document.getElementById('mini-player-thumb'),
+  miniPlayerTitle: document.getElementById('mini-player-title'),
 
   playPauseBtn: document.getElementById('play-pause-btn'),
   skipBtn: document.getElementById('skip-btn'),
@@ -88,7 +90,6 @@ const el = {
   timeCurrent: document.getElementById('time-current'),
   timeTotal: document.getElementById('time-total'),
   syncHint: document.getElementById('sync-hint'),
-  editLyricsBtn: document.getElementById('edit-lyrics-btn'),
   lyricsEditModal: document.getElementById('lyrics-edit-modal'),
   lyricsEditClose: document.getElementById('lyrics-edit-close'),
   manualLrcInput: document.getElementById('manual-lrc-input'),
@@ -690,7 +691,7 @@ async function renderHistoryThumbnailGrid(){
 // ---------- 画面切り替え ----------
 el.brandHomeBtn.addEventListener('click', () => {
   el.searchInput.value = '';
-  showResultsView();
+  minimizeKaraokeView();
   el.historyThumbSection.classList.remove('hidden');
   el.resultsHeading.classList.add('hidden');
   if(!el.historyThumbGrid.children.length){
@@ -709,13 +710,46 @@ function showResultsView(){
   stopKaraokeSyncLoop();
   stopSeekBarLoop();
   stopBackgroundSlideshow();
+  hideMiniPlayer();
 }
 function showKaraokeView(){
   el.resultsView.classList.add('hidden');
   el.karaokeView.classList.remove('hidden');
+  hideMiniPlayer();
   startBackgroundSlideshow();
+  if(state.lyrics.length && state.player && state.player.getPlayerState && state.player.getPlayerState() === YT.PlayerState.PLAYING){
+    startKaraokeSyncLoop();
+  }
+  if(state.player && state.player.getPlayerState && state.player.getPlayerState() === YT.PlayerState.PLAYING){
+    startSeekBarLoop();
+  }
 }
-el.backToSearchBtn.addEventListener('click', showResultsView);
+
+// 再生は止めずに、検索画面へ戻って右下にミニプレイヤーを表示する
+function minimizeKaraokeView(){
+  const hasTrack = state.player && state.player.getPlayerState &&
+    state.player.getPlayerState() !== -1 && state.nowPlaying;
+  if(!hasTrack){
+    showResultsView();
+    return;
+  }
+  el.karaokeView.classList.add('hidden');
+  el.resultsView.classList.remove('hidden');
+  stopKaraokeSyncLoop();
+  stopBackgroundSlideshow();
+  showMiniPlayer();
+}
+
+function showMiniPlayer(){
+  if(!state.nowPlaying) return;
+  el.miniPlayerTitle.textContent = decodeHTML(state.nowPlaying.title);
+  el.miniPlayerThumb.src = state.nowPlaying.thumb || '';
+  el.miniPlayer.classList.remove('hidden');
+}
+function hideMiniPlayer(){
+  el.miniPlayer.classList.add('hidden');
+}
+el.miniPlayer.addEventListener('click', showKaraokeView);
 
 // ---------- 背景の風景写真スライドショー（Picsum Photos / APIキー不要） ----------
 const SCENIC_PHOTO_IDS = [
@@ -889,6 +923,8 @@ function playTrack(v, indexHint){
   el.karaokeTitle.textContent = decodeHTML(v.title);
   el.karaokeArtist.textContent = decodeHTML(v.channel);
   state.currentIndex = (typeof indexHint === 'number') ? indexHint : state.currentList.findIndex(x => x.id === v.id);
+  state.nowPlaying = v;
+  if(!el.miniPlayer.classList.contains('hidden')) showMiniPlayer();
   state.recentlyPlayedIds = [v.id, ...state.recentlyPlayedIds.filter(id => id !== v.id)].slice(0, 8);
   el.seekSlider.value = 0;
   el.timeCurrent.textContent = '0:00';
@@ -1729,10 +1765,6 @@ function updatePitchSegment(){
 }
 
 // ---------- 歌詞の手動編集 ----------
-el.editLyricsBtn.addEventListener('click', () => {
-  el.manualLrcInput.value = '';
-  el.lyricsEditModal.classList.remove('hidden');
-});
 el.lyricsEditClose.addEventListener('click', () => el.lyricsEditModal.classList.add('hidden'));
 el.manualLrcApply.addEventListener('click', () => {
   const lines = parseLrc(el.manualLrcInput.value);
@@ -1748,12 +1780,11 @@ el.manualLrcApply.addEventListener('click', () => {
 
 // ---------- タップで同期（クリックした行に合わせてズレ・速度を内部的に調整） ----------
 
-// ---------- 背景の明るさ ----------
+// ---------- 背景の明るさ（設定画面のみで調整。再生画面には表示しない） ----------
 const BG_BRIGHTNESS_KEY = 'kr_bg_brightness';
 function applyBgBrightness(value){
   document.documentElement.style.setProperty('--bg-brightness', value);
   el.bgBrightnessSlider.value = value;
-  el.bgBrightnessSliderMini.value = value;
   localStorage.setItem(BG_BRIGHTNESS_KEY, value);
 }
 function loadBgBrightness(){
@@ -1763,7 +1794,6 @@ function loadBgBrightness(){
 applyBgBrightness(loadBgBrightness());
 applyLyricsMode(loadLyricsMode());
 el.bgBrightnessSlider.addEventListener('input', () => applyBgBrightness(parseFloat(el.bgBrightnessSlider.value)));
-el.bgBrightnessSliderMini.addEventListener('input', () => applyBgBrightness(parseFloat(el.bgBrightnessSliderMini.value)));
 
 // ---------- Init ----------
 state.apiKeys = loadApiKeys();
