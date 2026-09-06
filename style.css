@@ -392,16 +392,17 @@ button{ font-family:inherit; cursor:pointer; }
 
 /* 全体を通過し終える直前、左から右へ走り抜けるキラキラ */
 /* フレーズを通過し終えた瞬間、その区間に色とりどりの粒がパッと咲いてフェードアウトする演出 */
-.pitch-phrase-particle{
-  position:absolute; pointer-events:none; z-index:2;
-  animation-name: pitchPhraseParticlePop;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
+.pitch-sweep-wave{
+  position:absolute; top:0; bottom:0; left:-10%; width:12%;
+  pointer-events:none; z-index:2;
+  animation: pitchSweepWaveMove .65s linear forwards;
 }
-@keyframes pitchPhraseParticlePop{
-  0%{ opacity:0; transform: scale(.3) translateY(4px); }
-  25%{ opacity:1; transform: scale(1.1) translateY(-2px); }
-  100%{ opacity:0; transform: scale(.6) translateY(-14px); }
+.pitch-sweep-wave img{ position:absolute; }
+@keyframes pitchSweepWaveMove{
+  0%{ left:-10%; opacity:0; }
+  10%{ opacity:1; }
+  85%{ opacity:1; }
+  100%{ left:98%; opacity:0; }
 }
 
 /* しゃくり・こぶし・フォール・ビブラートを示す、バー上部のアイコン */

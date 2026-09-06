@@ -79,6 +79,7 @@ const el = {
   pitchCursorTrail: document.getElementById('pitch-cursor-trail'),
   pitchSweep: document.getElementById('pitch-sweep'),
   pitchBarWrap: document.getElementById('pitch-bar-wrap'),
+  pitchBar: document.getElementById('pitch-bar'),
   statShakuri: document.getElementById('stat-shakuri'),
   statKobushi: document.getElementById('stat-kobushi'),
   statFall: document.getElementById('stat-fall'),
@@ -1783,9 +1784,9 @@ function movePitchCursor(duration){
       el.pitchCursorTrail.style.opacity = (t > 0 && t < 1) ? '1' : '0';
     }
 
-    // フレーズ（ギャップで区切られた一区間）を通過し終えるたびに、その区間全体に色とりどりのキラキラを咲かせる
+    // フレーズ（ギャップで区切られた一区間）を通過し終えるたびに、バー全体を左から右へキラキラが流れる演出を出す
     while(phraseIndex < phrases.length && t >= phrases[phraseIndex].end){
-      spawnPhraseBurst(phrases[phraseIndex]);
+      triggerSweepWave();
       phraseIndex++;
     }
 
@@ -1810,30 +1811,29 @@ function spawnBlockStar(boundary){
   star.addEventListener('animationend', () => star.remove());
 }
 
-// フレーズを通過し終えた瞬間、その区間全体に色とりどりの細かいキラキラをまとめて咲かせ、フェードアウトさせる演出
+// フレーズを通過し終えた瞬間、バー本体の中だけで、左端から右端へキラキラの帯が光って流れ消える演出
 const PHRASE_BURST_COLORS = ['#ff5e6c', '#ff9f4d', '#ffe066', '#8cff8c', '#5ecbff', '#8c9dff', '#d68cff', '#ffffff'];
-function spawnPhraseBurst(phrase){
-  if(!el.pitchBarWrap) return;
-  const widthPct = (phrase.end - phrase.start) * 100;
-  const particleCount = 16 + Math.floor(Math.random() * 8); // 16〜23個
+function triggerSweepWave(){
+  if(!el.pitchBar) return;
+  const wave = document.createElement('div');
+  wave.className = 'pitch-sweep-wave';
+
+  const particleCount = 9 + Math.floor(Math.random() * 4); // 9〜12個を縦に並べて帯にする
   for(let i = 0; i < particleCount; i++){
     const p = document.createElement('img');
     p.src = './sparkle.png';
-    p.className = 'pitch-phrase-particle';
     p.alt = '';
-    const leftPct = (phrase.start * 100) + Math.random() * widthPct;
-    const size = 6 + Math.round(Math.random() * 10);
+    const size = 8 + Math.round(Math.random() * 9);
     const color = PHRASE_BURST_COLORS[Math.floor(Math.random() * PHRASE_BURST_COLORS.length)];
-    p.style.left = `${leftPct}%`;
-    p.style.top = `${20 + Math.round(Math.random() * 45)}%`;
+    p.style.top = `${8 + Math.round(Math.random() * 76)}%`;
     p.style.width = `${size}px`;
     p.style.height = `${size}px`;
     p.style.filter = `drop-shadow(0 0 4px ${color}) drop-shadow(0 0 7px ${color})`;
     p.style.animationDelay = `${(Math.random() * 0.15).toFixed(2)}s`;
-    p.style.animationDuration = `${(0.7 + Math.random() * 0.5).toFixed(2)}s`;
-    el.pitchBarWrap.appendChild(p);
-    p.addEventListener('animationend', () => p.remove());
+    wave.appendChild(p);
   }
+  el.pitchBar.appendChild(wave);
+  wave.addEventListener('animationend', () => wave.remove());
 }
 
 // 全体を通過し終える直前に、バー全体を左から右へキラキラが走り抜ける演出
