@@ -76,7 +76,6 @@ const el = {
   pitchTrackBase: document.getElementById('pitch-track-base'),
   pitchTrackColor: document.getElementById('pitch-track-color'),
   pitchCursor: document.getElementById('pitch-cursor'),
-  pitchCursorTrail: document.getElementById('pitch-cursor-trail'),
   pitchSweep: document.getElementById('pitch-sweep'),
   pitchBarWrap: document.getElementById('pitch-bar-wrap'),
   pitchBar: document.getElementById('pitch-bar'),
@@ -1662,6 +1661,8 @@ function regeneratePitchTrack(bumpedKey){
     iconPositions.set(idx, key);
   }
 
+  state.currentIconPositions = iconPositions;
+
   // キラキラは実機同様、現在位置付近にごく少数だけ出す（バー全体に散らばらせない）
   const sparklePositions = new Set();
   const sparkleCount = 1 + Math.floor(Math.random() * 2); // 1〜2箇所のみ
@@ -1727,7 +1728,7 @@ function regeneratePitchTrack(bumpedKey){
   }
 }
 
-// 音程バーのカーソルと、通過後に残る虹色のキラキラの軌跡を、行の長さに合わせて左端から右端まで動かす
+// 音程バーのカーソルと、動画を参考にしたキラキラ演出を、行の長さに合わせて左端から右端まで動かす
 function movePitchCursor(duration){
   if(!el.pitchCursor || !el.pitchTrackColor) return;
   if(state.pitchCursorRAF) cancelAnimationFrame(state.pitchCursorRAF);
@@ -1736,11 +1737,11 @@ function movePitchCursor(duration){
   el.pitchTrackColor.style.transition = 'none';
   el.pitchCursor.style.left = '0%';
   el.pitchTrackColor.style.clipPath = 'inset(0 100% 0 0)';
-  if(el.pitchCursorTrail){ el.pitchCursorTrail.style.left = '0%'; el.pitchCursorTrail.style.opacity = '0'; }
 
   // 各ブロック（ギャップ除く）の左右境界を割合(0〜1)で割り出しておく
   const trackRect = el.pitchTrackBase.getBoundingClientRect();
-  const boundaries = Array.from(el.pitchTrackBase.querySelectorAll('.pitch-pill')).map(p => {
+  const pillEls = Array.from(el.pitchTrackBase.querySelectorAll('.pitch-pill'));
+  const boundaries = pillEls.map(p => {
     const r = p.getBoundingClientRect();
     return {
       start: trackRect.width ? (r.left - trackRect.left) / trackRect.width : 0,
@@ -1749,21 +1750,10 @@ function movePitchCursor(duration){
     };
   });
 
-  // ギャップで区切られた「フレーズ区間」ごとにまとめておく（フレーズを通過し終えた時にキラキラを咲かせるため）
-  const phrases = [];
-  let segStart = null;
-  boundaries.forEach((b, i) => {
-    if(b.isGap){
-      if(segStart !== null) phrases.push({ start: segStart, end: boundaries[i - 1].end });
-      segStart = null;
-    } else if(segStart === null){
-      segStart = b.start;
-    }
-  });
-  if(segStart !== null) phrases.push({ start: segStart, end: boundaries[boundaries.length - 1].end });
-
+  const iconPositions = state.currentIconPositions || new Map();
   let lastPillIndex = -1;
-  let phraseIndex = 0;
+  let wholeBarSparkleDone = false;
+  let lastClusterTime = 0;
   const startTime = performance.now();
 
   function tick(now){
@@ -1771,29 +1761,30 @@ function movePitchCursor(duration){
     el.pitchCursor.style.left = `${t * 100}%`;
     el.pitchTrackColor.style.clipPath = `inset(0 ${(1 - t) * 100}% 0 0)`;
 
-    // ブロックを1つ超えるたびに、小さな星を飛ばす
+    // ブロックを1つ超えるたびに、小さな星と、技法アイコンなら追加でオレンジの粒を飛ばす
     const idx = boundaries.findIndex(b => t >= b.start && t < b.end);
     if(idx !== -1 && idx !== lastPillIndex){
       lastPillIndex = idx;
-      if(!boundaries[idx].isGap) spawnBlockStar(boundaries[idx]);
+      if(!boundaries[idx].isGap){
+        spawnBlockStar(boundaries[idx]);
+        if(iconPositions.has(idx)) spawnTechniquePop(boundaries[idx]);
+      }
     }
 
-    // 水色のキラキラをカーソルに追従させる
-    if(el.pitchCursorTrail){
-      el.pitchCursorTrail.style.left = `${t * 100}%`;
-      el.pitchCursorTrail.style.opacity = (t > 0 && t < 1) ? '1' : '0';
+    // カーソルの少し手前に、水色〜白の細かい粒が複数まとまって追従する（一定間隔で発生させて「もや」に見せる）
+    if(t > 0 && t < 1 && now - lastClusterTime > 90){
+      lastClusterTime = now;
+      spawnCursorMist(t);
     }
 
-    // フレーズ（ギャップで区切られた一区間）を通過し終えるたびに、バー全体を左から右へキラキラが流れる演出を出す
-    while(phraseIndex < phrases.length && t >= phrases[phraseIndex].end){
-      triggerSweepWave();
-      phraseIndex++;
+    // バー全体（画面いっぱいのブロック群）を通過し終えた瞬間に、1回だけ全体へキラキラを咲かせる
+    if(!wholeBarSparkleDone && t >= 1){
+      wholeBarSparkleDone = true;
+      spawnPhraseSparkle({ start: 0, end: 1 });
     }
 
     if(t < 1){
       state.pitchCursorRAF = requestAnimationFrame(tick);
-    } else if(el.pitchCursorTrail){
-      el.pitchCursorTrail.style.opacity = '0';
     }
   }
   state.pitchCursorRAF = requestAnimationFrame(tick);
@@ -1803,7 +1794,7 @@ function movePitchCursor(duration){
 function spawnBlockStar(boundary){
   if(!el.pitchBarWrap) return;
   const star = document.createElement('img');
-  star.src = './sparkle.png';
+  star.src = './star_new.png';
   star.className = 'pitch-block-star';
   star.alt = '';
   star.style.left = `${((boundary.start + boundary.end) / 2) * 100}%`;
@@ -1811,30 +1802,70 @@ function spawnBlockStar(boundary){
   star.addEventListener('animationend', () => star.remove());
 }
 
-// フレーズを通過し終えた瞬間、バー本体の中だけで、左端から右端へキラキラの帯が光って流れ消える演出
-const PHRASE_BURST_COLORS = ['#ff5e6c', '#ff9f4d', '#ffe066', '#8cff8c', '#5ecbff', '#8c9dff', '#d68cff', '#ffffff'];
-function triggerSweepWave(){
-  if(!el.pitchBar) return;
-  const wave = document.createElement('div');
-  wave.className = 'pitch-sweep-wave';
+// 技法（しゃくり等）のアイコンが現れた瞬間、その脇でオレンジの小さな粒がピョンと跳ねる演出
+function spawnTechniquePop(boundary){
+  if(!el.pitchBarWrap) return;
+  const pop = document.createElement('div');
+  pop.className = 'pitch-technique-pop';
+  pop.style.left = `${((boundary.start + boundary.end) / 2) * 100}%`;
+  el.pitchBarWrap.appendChild(pop);
+  pop.addEventListener('animationend', () => pop.remove());
+}
 
-  const particleCount = 9 + Math.floor(Math.random() * 4); // 9〜12個を縦に並べて帯にする
+// カーソルのすぐ手前に、水色〜白の細かい粒が複数まとまって「もや」のように追従する演出
+const CURSOR_MIST_COLORS = ['#ffffff', '#eaf6ff', '#bfe6ff', '#dff0ff'];
+function spawnCursorMist(t){
+  if(!el.pitchBar) return;
+  const count = 2 + Math.floor(Math.random() * 2); // 2〜3粒
+  for(let i = 0; i < count; i++){
+    const p = document.createElement('img');
+    p.src = './sparkle.png';
+    p.className = 'pitch-cursor-mist';
+    p.alt = '';
+    const size = 6 + Math.round(Math.random() * 6);
+    const color = CURSOR_MIST_COLORS[Math.floor(Math.random() * CURSOR_MIST_COLORS.length)];
+    const leftPct = Math.max(0, t * 100 - Math.random() * 4);
+    p.style.left = `${leftPct}%`;
+    p.style.top = `${20 + Math.round(Math.random() * 55)}%`;
+    p.style.width = `${size}px`;
+    p.style.height = `${size}px`;
+    p.style.filter = `drop-shadow(0 0 3px ${color}) drop-shadow(0 0 5px ${color})`;
+    el.pitchBar.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
+}
+
+// フレーズを通過し終えた瞬間、その区間全体に白〜銀を中心にした細かいキラキラをまとめて咲かせ、フェードアウトさせる演出
+const PHRASE_SPARKLE_COLORS = ['#ff5e6c', '#ff9f4d', '#ffe066', '#8cff8c', '#5ecbff', '#8c9dff', '#d68cff'];
+function spawnPhraseSparkle(phrase){
+  if(!el.pitchBar) return;
+  const widthPct = (phrase.end - phrase.start) * 100;
+  const sweepDuration = 0.55; // この秒数かけて左から右へなめらかに光らせる
+
+  // 粒は位置順に均等配置し、ゆらぎを最小限にして「パラパラ」感を抑える
+  const particleCount = 40 + Math.floor(Math.random() * 12); // 40〜51個
   for(let i = 0; i < particleCount; i++){
     const p = document.createElement('img');
     p.src = './sparkle.png';
+    p.className = 'pitch-phrase-particle';
     p.alt = '';
-    const size = 8 + Math.round(Math.random() * 9);
-    const color = PHRASE_BURST_COLORS[Math.floor(Math.random() * PHRASE_BURST_COLORS.length)];
-    p.style.top = `${8 + Math.round(Math.random() * 76)}%`;
+    const relativeLeft = Math.min(1, (i / particleCount) + (Math.random() * 0.6 / particleCount));
+    const leftPct = (phrase.start * 100) + relativeLeft * widthPct;
+    const size = 5 + Math.round(Math.random() * 7);
+    const color = PHRASE_SPARKLE_COLORS[Math.floor(Math.random() * PHRASE_SPARKLE_COLORS.length)];
+    p.style.left = `${leftPct}%`;
+    p.style.top = `${10 + Math.round(Math.random() * 70)}%`;
     p.style.width = `${size}px`;
     p.style.height = `${size}px`;
-    p.style.filter = `drop-shadow(0 0 4px ${color}) drop-shadow(0 0 7px ${color})`;
-    p.style.animationDelay = `${(Math.random() * 0.15).toFixed(2)}s`;
-    wave.appendChild(p);
+    p.style.filter = `drop-shadow(0 0 3px ${color}) drop-shadow(0 0 5px ${color})`;
+    // 左側の粒ほど早く、右側の粒ほど遅れて光るようにする。ゆらぎはごく小さくし、連続的に見せる
+    p.style.animationDelay = `${(relativeLeft * sweepDuration + Math.random() * 0.03).toFixed(3)}s`;
+    p.style.animationDuration = `${(0.55 + Math.random() * 0.15).toFixed(2)}s`;
+    el.pitchBar.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
   }
-  el.pitchBar.appendChild(wave);
-  wave.addEventListener('animationend', () => wave.remove());
 }
+
 
 // 全体を通過し終える直前に、バー全体を左から右へキラキラが走り抜ける演出
 // しゃくり・こぶし・フォール・ビブラートのカウンターを、行が変わるたびに演出としてランダムに増やす。

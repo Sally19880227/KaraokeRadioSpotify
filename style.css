@@ -338,17 +338,17 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .pitch-pill{
   height:14px; flex:1 1 auto; min-width:6px;
-  position:relative;
+  position:relative; border-radius:7px;
   transition: margin-top .15s ease;
 }
-/* 未通過部分：うすい灰色のブロック */
+/* 未通過・通過済みとも同じ白〜クリーム色に統一（濃淡は付けない） */
 .pitch-track-base .pitch-pill{
-  background: #6b6f7c;
-  border-top:1px solid rgba(255,255,255,0.25);
+  background: #f0f0f2;
+  border-top:1px solid rgba(255,255,255,0.5);
 }
 .pitch-track-base .pitch-pill.is-gap{ background: transparent; border-top:none; }
 
-/* 通過済み部分：実際の色（ブロックのみに色がつき、帯全体には色をつけない） */
+/* 通過済み部分：実際の色（未通過とほぼ同じ白系。区別は縦線カーソルのみで示す） */
 .pitch-track-color .pitch-pill{
   background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #f2a900);
   border-top:1px solid rgba(255,255,255,0.8);
@@ -361,18 +361,12 @@ button{ font-family:inherit; cursor:pointer; }
   width:2px; background: #fff; box-shadow: 0 0 8px #fff;
   z-index:3;
 }
-.pitch-cursor::before{
-  content:''; position:absolute; top:-3px; left:-5px;
-  width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
-  border-top:8px solid #ff5e6c;
-}
-
 /* ブロックを超えるたびに飛び上がって消える小さな星 */
 .pitch-block-star{
-  position:absolute; bottom:36px; width:14px; height:14px;
+  position:absolute; top:6px; width:18px; height:18px;
   transform: translateX(-50%);
   pointer-events:none; z-index:4;
-  filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 8px #ffd166);
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px #ffd166);
   animation: pitchBlockStarPop .6s ease-out forwards;
 }
 @keyframes pitchBlockStarPop{
@@ -381,28 +375,44 @@ button{ font-family:inherit; cursor:pointer; }
   100%{ opacity:0; transform: translate(-50%, -26px) scale(1.1) rotate(90deg); }
 }
 
-/* カーソルに追従する水色のキラキラ */
-.pitch-cursor-trail{
-  position:absolute; top:50%; width:18px; height:18px;
-  transform: translate(-50%, -50%);
-  z-index:3; pointer-events:none; opacity:0;
-  filter: drop-shadow(0 0 6px #5ecbff) drop-shadow(0 0 10px #5ecbff);
-  transition: opacity .15s ease;
+/* 技法アイコンが現れた瞬間、脇でオレンジの粒がピョンと跳ねる演出 */
+.pitch-technique-pop{
+  position:absolute; top:-6px; width:8px; height:8px; border-radius:50%;
+  transform: translateX(-50%);
+  background: #ffb347; box-shadow: 0 0 4px #ffb347, 0 0 7px #ffb347;
+  pointer-events:none; z-index:4;
+  animation: pitchTechniquePop .5s ease-out forwards;
+}
+@keyframes pitchTechniquePop{
+  0%{ opacity:0; transform: translate(-50%, 0) scale(.5); }
+  30%{ opacity:1; transform: translate(-50%, -10px) scale(1); }
+  100%{ opacity:0; transform: translate(-50%, -20px) scale(.7); }
 }
 
-/* 全体を通過し終える直前、左から右へ走り抜けるキラキラ */
-/* フレーズを通過し終えた瞬間、その区間に色とりどりの粒がパッと咲いてフェードアウトする演出 */
-.pitch-sweep-wave{
-  position:absolute; top:0; bottom:0; left:-10%; width:12%;
-  pointer-events:none; z-index:2;
-  animation: pitchSweepWaveMove .65s linear forwards;
+/* カーソルの少し手前を漂う、水色〜白の細かい粒（もやのように追従） */
+.pitch-cursor-mist{
+  position:absolute; pointer-events:none; z-index:3;
+  animation: pitchCursorMistDrift .5s ease-out forwards;
 }
-.pitch-sweep-wave img{ position:absolute; }
-@keyframes pitchSweepWaveMove{
-  0%{ left:-10%; opacity:0; }
-  10%{ opacity:1; }
-  85%{ opacity:1; }
-  100%{ left:98%; opacity:0; }
+@keyframes pitchCursorMistDrift{
+  0%{ opacity:0; transform: scale(.5) translateY(3px); }
+  30%{ opacity:1; }
+  100%{ opacity:0; transform: scale(.9) translateY(-6px); }
+}
+
+/* フレーズを通過し終えた瞬間、その区間に白〜銀のキラキラがまとめて咲いてフェードアウトする演出 */
+.pitch-phrase-particle{
+  position:absolute; pointer-events:none; z-index:2;
+  animation-name: pitchPhraseParticlePop;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+/* 粒の下地として、なめらかに左から右へ移動する光の帯（連続感を出す） */
+@keyframes pitchPhraseParticlePop{
+  0%{ opacity:0; transform: scale(.3) translateY(4px); }
+  25%{ opacity:1; transform: scale(1.1) translateY(-2px); }
+  100%{ opacity:0; transform: scale(.6) translateY(-14px); }
 }
 
 /* しゃくり・こぶし・フォール・ビブラートを示す、バー上部のアイコン */
