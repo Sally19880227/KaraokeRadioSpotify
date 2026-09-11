@@ -315,55 +315,9 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .lyrics-ripple.is-hidden{ display:none; }
 
-/* ふんわり漂う、色とりどりの光の玉（オーロラ風の下地） */
-.lyrics-ripple .blob{
-  position:absolute; border-radius:50%; filter: blur(30px); opacity:.5;
-  animation-timing-function: ease-in-out; animation-iteration-count: infinite;
-}
-.lyrics-ripple .blob:nth-child(1){ width:180px; height:180px; background:#ff5e6c; left:20%; top:30%; animation: blobDrift1 9s infinite; }
-.lyrics-ripple .blob:nth-child(2){ width:150px; height:150px; background:#5ecbff; left:60%; top:20%; animation: blobDrift2 11s infinite; }
-.lyrics-ripple .blob:nth-child(3){ width:160px; height:160px; background:#ffe066; left:65%; top:60%; animation: blobDrift3 7.5s infinite; }
-.lyrics-ripple .blob:nth-child(4){ width:140px; height:140px; background:#8cff8c; left:15%; top:65%; animation: blobDrift1 10.5s infinite reverse; }
-.lyrics-ripple .blob:nth-child(5){ width:130px; height:130px; background:#d68cff; left:42%; top:45%; animation: blobDrift2 8s infinite reverse; }
-@keyframes blobDrift1{
-  0%,100%{ transform: translate(0,0) scale(1); }
-  33%{ transform: translate(30px,-25px) scale(1.15); }
-  66%{ transform: translate(-20px,20px) scale(.9); }
-}
-@keyframes blobDrift2{
-  0%,100%{ transform: translate(0,0) scale(1); }
-  40%{ transform: translate(-35px,15px) scale(.85); }
-  75%{ transform: translate(20px,30px) scale(1.2); }
-}
-@keyframes blobDrift3{
-  0%,100%{ transform: translate(0,0) scale(1); }
-  30%{ transform: translate(25px,25px) scale(1.1); }
-  60%{ transform: translate(-30px,-15px) scale(.95); }
-}
-
-/* 波紋（拡大しながらフェードアウト） */
-.lyrics-ripple .ring{
-  position:absolute; top:50%; left:50%; border-radius:50%;
-  border:2px solid; opacity:0; transform: translate(-50%, -50%) scale(0);
-  animation: lyricsRippleGrow 4.5s ease-out infinite;
-}
-.lyrics-ripple .ring:nth-of-type(1){ width:60px; height:60px; border-color:#ff5e6c; animation-delay:0s; left:calc(50% - 40px); }
-.lyrics-ripple .ring:nth-of-type(2){ width:90px; height:70px; border-color:#5ecbff; animation-delay:.9s; left:calc(50% + 60px); top:calc(50% - 30px); }
-.lyrics-ripple .ring:nth-of-type(3){ width:70px; height:90px; border-color:#ffe066; animation-delay:1.8s; left:calc(50% - 90px); top:calc(50% + 40px); }
-.lyrics-ripple .ring:nth-of-type(4){ width:100px; height:60px; border-color:#8cff8c; animation-delay:2.6s; left:calc(50% + 20px); top:calc(50% + 70px); }
-.lyrics-ripple .ring:nth-of-type(5){ width:80px; height:80px; border-color:#d68cff; animation-delay:3.4s; left:calc(50% - 20px); top:calc(50% - 80px); }
-@keyframes lyricsRippleGrow{
-  0%{ opacity:0; transform: translate(-50%, -50%) scale(0.2); }
-  15%{ opacity:.6; }
-  70%{ opacity:.3; }
-  100%{ opacity:0; transform: translate(-50%, -50%) scale(2.8); }
-}
-
-/* 漂うキラキラの粒 */
-/* 再生中の曲のサムネイルを、ぼかした背景として敷く */
+/* 歌詞が見つからない間、再生中の曲のサムネイルを画面全体に表示する */
 .lyrics-ripple-thumb{
-  position:absolute; inset:-5%; width:110%; height:110%; object-fit:cover;
-  filter: blur(28px) brightness(0.55) saturate(1.2);
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
   opacity:0; transition: opacity .6s ease;
 }
 .lyrics-ripple-thumb.is-loaded{ opacity:1; }

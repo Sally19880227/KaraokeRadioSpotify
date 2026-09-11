@@ -1289,6 +1289,7 @@ async function loadKaraokeLyrics(v){
   const result = await findLyricsWithFallback(v);
   if(!result.lrc){
     el.karaokeStatus.textContent = `歌詞が見つかりませんでした（検索語: ${result.usedArtist} / ${result.usedTrack}）。下の候補をタップするか、「✎ 歌詞を編集」から手動で貼り付けることもできます。`;
+    if(el.pitchBarWrap) el.pitchBarWrap.classList.add('hidden');
     renderLyricCandidates(v);
     return;
   }
@@ -1305,10 +1306,12 @@ function applyLyrics(lines){
     el.karaokeLines.innerHTML = '';
     document.getElementById('full-lyrics-view').innerHTML = '';
     if(el.lyricsRipple) el.lyricsRipple.classList.remove('is-hidden');
+    if(el.pitchBarWrap) el.pitchBarWrap.classList.add('hidden');
     return;
   }
   el.karaokeStatus.textContent = '';
   if(el.lyricsRipple) el.lyricsRipple.classList.add('is-hidden');
+  if(el.pitchBarWrap) el.pitchBarWrap.classList.remove('hidden');
   renderKaraokeWindow(-1);
   if(state.player && state.player.getPlayerState && state.player.getPlayerState() === YT.PlayerState.PLAYING){
     startKaraokeSyncLoop();
