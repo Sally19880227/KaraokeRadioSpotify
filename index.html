@@ -25,16 +25,26 @@
     <button id="settings-btn" class="icon-btn" aria-label="設定">⚙</button>
   </header>
 
-  <div id="search-history" class="search-history hidden">
-    <span class="search-history-label">最近の検索:</span>
-    <div id="search-history-chips" class="search-history-chips"></div>
-    <button id="search-history-clear" class="search-history-clear">履歴を消去</button>
+  <div id="search-history" class="search-history collapsible hidden">
+    <button type="button" class="collapsible-header" data-target="search-history-body">
+      <span class="search-history-label">最近の検索</span>
+      <span class="collapsible-arrow">▶</span>
+    </button>
+    <div id="search-history-body" class="collapsible-body is-collapsed">
+      <div id="search-history-chips" class="search-history-chips"></div>
+      <button id="search-history-clear" class="search-history-clear">履歴を消去</button>
+    </div>
   </div>
 
-  <div id="suggested-artists" class="search-history">
-    <span class="search-history-label">人気アーティスト:</span>
-    <div class="search-history-chips" id="artist-chip-row"></div>
-    <button type="button" id="artist-toggle-btn" class="search-history-clear hidden"></button>
+  <div id="suggested-artists" class="search-history collapsible">
+    <button type="button" class="collapsible-header" data-target="suggested-artists-body">
+      <span class="search-history-label">人気アーティスト</span>
+      <span class="collapsible-arrow">▶</span>
+    </button>
+    <div id="suggested-artists-body" class="collapsible-body is-collapsed">
+      <div class="search-history-chips" id="artist-chip-row"></div>
+      <button type="button" id="artist-toggle-btn" class="search-history-clear hidden"></button>
+    </div>
   </div>
 
   <!-- 検索結果リスト（曲を選ぶまで表示） -->
@@ -95,11 +105,21 @@
 
     <div class="karaoke-body">
       <div id="karaoke-status" class="karaoke-status"></div>
-      <div id="lyric-candidates" class="lyric-candidates"></div>
+      <div id="lyrics-ripple" class="lyrics-ripple">
+        <img id="lyrics-ripple-thumb" class="lyrics-ripple-thumb" alt="">
+        <span class="blob"></span><span class="blob"></span><span class="blob"></span><span class="blob"></span><span class="blob"></span>
+        <span class="ring"></span><span class="ring"></span><span class="ring"></span><span class="ring"></span><span class="ring"></span>
+      </div>
       <div id="karaoke-lines" class="karaoke-lines"></div>
       <div id="full-lyrics-view" class="full-lyrics-view hidden"></div>
       <p id="karaoke-tap-hint" class="karaoke-tap-hint">ズレていたら、合っている行を <strong>タップ</strong> してください</p>
     </div>
+
+    <div id="lyric-candidates" class="lyric-candidates"></div>
+    <form id="manual-lyric-search-form" class="manual-lyric-search">
+      <input type="text" id="manual-lyric-search-input" placeholder="見つからない場合は曲タイトルを入力して検索">
+      <button type="submit">検索</button>
+    </form>
 
     <div class="control-bar control-bar-bottom">
       <button id="play-pause-btn" class="control-btn" aria-label="再生/一時停止"><img id="play-pause-icon" src="./icon_pause.png" alt=""></button>

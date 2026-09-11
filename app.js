@@ -72,6 +72,10 @@ const el = {
   karaokeArtist: document.getElementById('karaoke-artist'),
   karaokeStatus: document.getElementById('karaoke-status'),
   lyricCandidates: document.getElementById('lyric-candidates'),
+  manualLyricSearchForm: document.getElementById('manual-lyric-search-form'),
+  manualLyricSearchInput: document.getElementById('manual-lyric-search-input'),
+  lyricsRipple: document.getElementById('lyrics-ripple'),
+  lyricsRippleThumb: document.getElementById('lyrics-ripple-thumb'),
   karaokeLines: document.getElementById('karaoke-lines'),
   pitchTrackBase: document.getElementById('pitch-track-base'),
   pitchTrackColor: document.getElementById('pitch-track-color'),
@@ -512,6 +516,17 @@ const ARTIST_INITIAL_COUNT = 16;
 const artistChipRow = document.getElementById('artist-chip-row');
 const artistToggleBtn = document.getElementById('artist-toggle-btn');
 
+// 「最近の検索」「人気アーティスト」の折りたたみ開閉（初期状態は畳んだまま）
+document.querySelectorAll('.collapsible-header').forEach(header => {
+  header.addEventListener('click', () => {
+    const body = document.getElementById(header.dataset.target);
+    if(!body) return;
+    const willOpen = body.classList.contains('is-collapsed');
+    body.classList.toggle('is-collapsed', !willOpen);
+    header.classList.toggle('is-open', willOpen);
+  });
+});
+
 function buildArtistChip(name){
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -930,6 +945,13 @@ function playTrack(v, indexHint){
   state.currentIndex = (typeof indexHint === 'number') ? indexHint : state.currentList.findIndex(x => x.id === v.id);
   state.nowPlaying = v;
   if(!el.miniPlayer.classList.contains('hidden')) showMiniPlayer();
+  if(el.lyricsRippleThumb){
+    el.lyricsRippleThumb.classList.remove('is-loaded');
+    if(v.thumb){
+      el.lyricsRippleThumb.src = v.thumb;
+      el.lyricsRippleThumb.onload = () => el.lyricsRippleThumb.classList.add('is-loaded');
+    }
+  }
   state.recentlyPlayedIds = [v.id, ...state.recentlyPlayedIds.filter(id => id !== v.id)].slice(0, 8);
   el.seekSlider.value = 0;
   el.timeCurrent.textContent = '0:00';
@@ -1250,6 +1272,7 @@ async function loadKaraokeLyrics(v){
   document.getElementById('full-lyrics-view').innerHTML = '';
   el.karaokeStatus.textContent = '歌詞を検索中…';
   if(el.lyricCandidates) el.lyricCandidates.innerHTML = '';
+  if(el.lyricsRipple) el.lyricsRipple.classList.remove('is-hidden');
 
   state.pitchStats = { shakuri: 0, kobushi: 0, fall: 0, vibrato: 0 };
   state.currentSegment = -1;
@@ -1281,13 +1304,34 @@ function applyLyrics(lines){
     el.karaokeStatus.textContent = '歌詞データを解析できませんでした。';
     el.karaokeLines.innerHTML = '';
     document.getElementById('full-lyrics-view').innerHTML = '';
+    if(el.lyricsRipple) el.lyricsRipple.classList.remove('is-hidden');
     return;
   }
   el.karaokeStatus.textContent = '';
+  if(el.lyricsRipple) el.lyricsRipple.classList.add('is-hidden');
   renderKaraokeWindow(-1);
   if(state.player && state.player.getPlayerState && state.player.getPlayerState() === YT.PlayerState.PLAYING){
     startKaraokeSyncLoop();
   }
+}
+
+// 候補にも無かった場合、曲タイトルを手入力して歌詞を再検索する
+if(el.manualLyricSearchForm){
+  el.manualLyricSearchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const query = el.manualLyricSearchInput.value.trim();
+    if(!query) return;
+    el.karaokeStatus.textContent = `「${query}」で歌詞を検索中…`;
+    const lrc = await fetchLyricsFromLrclibFreeText(query);
+    if(lrc){
+      if(el.lyricCandidates) el.lyricCandidates.innerHTML = '';
+      el.manualLyricSearchInput.value = '';
+      applyLyrics(parseLrc(lrc));
+      el.karaokeStatus.textContent = `「${query}」で見つかった歌詞を適用しました。`;
+    } else {
+      el.karaokeStatus.textContent = `「${query}」では歌詞が見つかりませんでした。別のタイトルで試すか、「✎ 歌詞を編集」から手動で貼り付けてください。`;
+    }
+  });
 }
 
 function startKaraokeSyncLoop(){
