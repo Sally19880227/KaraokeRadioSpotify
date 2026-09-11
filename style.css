@@ -284,7 +284,7 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .karaoke-status{ font-size:13.5px; color: var(--text-dim); margin-bottom:18px; }
 
-.lyric-candidates{ max-width: 640px; margin: 0 auto; padding: 0 20px 8px; }
+.lyric-candidates{ max-width: 640px; margin: 0 auto; padding: 0 20px 8px; position:relative; z-index:2; }
 .lyric-candidates-label{ font-size:12px; color: var(--text-dim); margin-bottom:10px; }
 .lyric-candidates-chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
 .lyric-candidate-chip{
@@ -298,6 +298,7 @@ button{ font-family:inherit; cursor:pointer; }
 
 .manual-lyric-search{
   display:flex; gap:8px; max-width:520px; margin: 0 auto 14px; padding: 0 20px;
+  position:relative; z-index:2;
 }
 .manual-lyric-search input{
   flex:1; background: var(--surface); border:1px solid var(--line); color: var(--text);

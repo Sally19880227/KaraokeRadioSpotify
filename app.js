@@ -606,7 +606,7 @@ function normalizeSearchResponse(data){
       id: it.id.videoId,
       title: it.snippet.title,
       channel: it.snippet.channelTitle,
-      thumb: it.snippet.thumbnails?.medium?.url || it.snippet.thumbnails?.default?.url,
+      thumb: it.snippet.thumbnails?.high?.url || it.snippet.thumbnails?.medium?.url || it.snippet.thumbnails?.default?.url,
     }));
 }
 function decodeHTML(str){
@@ -947,9 +947,21 @@ function playTrack(v, indexHint){
   if(!el.miniPlayer.classList.contains('hidden')) showMiniPlayer();
   if(el.lyricsRippleThumb){
     el.lyricsRippleThumb.classList.remove('is-loaded');
-    if(v.thumb){
-      el.lyricsRippleThumb.src = v.thumb;
-      el.lyricsRippleThumb.onload = () => el.lyricsRippleThumb.classList.add('is-loaded');
+    const thumb = el.lyricsRippleThumb;
+    thumb.onload = () => thumb.classList.add('is-loaded');
+    if(v.id){
+      // まず最高画質(maxresdefault)を試し、無ければ段階的により確実なものへフォールバックする
+      thumb.onerror = () => {
+        thumb.onerror = () => {
+          thumb.onerror = null;
+          if(v.thumb) thumb.src = v.thumb;
+        };
+        thumb.src = `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
+      };
+      thumb.src = `https://i.ytimg.com/vi/${v.id}/maxresdefault.jpg`;
+    } else if(v.thumb){
+      thumb.onerror = null;
+      thumb.src = v.thumb;
     }
   }
   state.recentlyPlayedIds = [v.id, ...state.recentlyPlayedIds.filter(id => id !== v.id)].slice(0, 8);
