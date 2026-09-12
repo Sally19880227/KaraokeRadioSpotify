@@ -880,10 +880,12 @@ function onPlayerError(e){
 function onPlayerStateChange(e){
   if(e.data === YT.PlayerState.PLAYING){
     el.playPauseIcon.src = './icon_pause.png';
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     startKaraokeSyncLoop();
     startSeekBarLoop();
   } else if(e.data === YT.PlayerState.PAUSED){
     el.playPauseIcon.src = './icon_play.png';
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     stopKaraokeSyncLoop();
     stopSeekBarLoop();
   } else if(e.data === YT.PlayerState.ENDED){
@@ -938,6 +940,23 @@ el.playPauseBtn.addEventListener('click', () => {
 });
 el.skipBtn.addEventListener('click', () => playNextByArtist());
 
+// ---------- Media Session API（Tesla等のステアリングホイールのメディアボタンからの操作に対応） ----------
+if('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('play', () => {
+    if(state.player && state.player.playVideo) state.player.playVideo();
+  });
+  navigator.mediaSession.setActionHandler('pause', () => {
+    if(state.player && state.player.pauseVideo) state.player.pauseVideo();
+  });
+  navigator.mediaSession.setActionHandler('nexttrack', () => {
+    playNextByArtist();
+  });
+  // 「前へ」は明確な巻き戻し対象がないため、現在の曲の先頭に戻す動作にしている
+  navigator.mediaSession.setActionHandler('previoustrack', () => {
+    if(state.player && state.player.seekTo) state.player.seekTo(0, true);
+  });
+}
+
 // ---------- 曲を選んで再生開始 ----------
 function startKaraoke(v){
   let idx = state.currentList.findIndex(x => x.id === v.id);
@@ -956,6 +975,13 @@ function playTrack(v, indexHint){
   state.nowPlaying = v;
   if(!el.miniPlayer.classList.contains('hidden')) showMiniPlayer();
   setBackgroundToTrackThumbnail(v);
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: decodeHTML(v.title),
+      artist: decodeHTML(v.channel),
+      artwork: v.thumb ? [{ src: v.thumb }] : [],
+    });
+  }
   state.recentlyPlayedIds = [v.id, ...state.recentlyPlayedIds.filter(id => id !== v.id)].slice(0, 8);
   el.seekSlider.value = 0;
   el.timeCurrent.textContent = '0:00';
@@ -978,7 +1004,7 @@ function playTrack(v, indexHint){
 // 次に検索するキーワードを決める：現在の曲のアーティスト名か、過去の検索履歴からランダムに1つ（半々の確率）
 function pickNextSearchQuery(currentArtist){
   const history = getSearchHistory();
-  if(history.length && Math.random() < 0.5){
+  if(history.length){
     const query = history[Math.floor(Math.random() * history.length)];
     return { query, fromHistory: true };
   }
