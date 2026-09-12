@@ -72,10 +72,6 @@ const el = {
   karaokeArtist: document.getElementById('karaoke-artist'),
   karaokeStatus: document.getElementById('karaoke-status'),
   lyricCandidates: document.getElementById('lyric-candidates'),
-  manualLyricSearchForm: document.getElementById('manual-lyric-search-form'),
-  manualLyricSearchInput: document.getElementById('manual-lyric-search-input'),
-  lyricsRipple: document.getElementById('lyrics-ripple'),
-  lyricsRippleThumb: document.getElementById('lyrics-ripple-thumb'),
   karaokeLines: document.getElementById('karaoke-lines'),
   pitchTrackBase: document.getElementById('pitch-track-base'),
   pitchTrackColor: document.getElementById('pitch-track-color'),
@@ -736,7 +732,6 @@ function showKaraokeView(){
   el.resultsView.classList.add('hidden');
   el.karaokeView.classList.remove('hidden');
   hideMiniPlayer();
-  startBackgroundSlideshow();
   if(state.lyrics.length && state.player && state.player.getPlayerState && state.player.getPlayerState() === YT.PlayerState.PLAYING){
     startKaraokeSyncLoop();
   }
@@ -803,19 +798,34 @@ function nextBackgroundPhoto(){
   }
   const id = bgOrder[bgPos++];
   const url = `https://picsum.photos/id/${id}/1600/900`;
+  crossfadeBackgroundTo(url);
+}
 
-  // 先読みしてから切り替えることで、読み込み中の空白を防ぐ
+// 曲のサムネイルへ、既存の背景レイヤー(暗幕オーバーレイ付き)を使って一度だけ切り替える（繰り返しは行わない）
+function setBackgroundToTrackThumbnail(v){
+  if(!v) return;
+  const urls = v.id
+    ? [`https://i.ytimg.com/vi/${v.id}/maxresdefault.jpg`, `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`, v.thumb]
+    : [v.thumb];
+  tryNextThumbnailUrl(urls.filter(Boolean), 0);
+}
+function tryNextThumbnailUrl(urls, i){
+  if(i >= urls.length) return;
   const img = new Image();
-  img.onload = () => {
-    const activeIsA = state.bgActiveLayer !== 'b';
-    const nextEl = document.getElementById(activeIsA ? 'bg-layer-b' : 'bg-layer-a');
-    const prevEl = document.getElementById(activeIsA ? 'bg-layer-a' : 'bg-layer-b');
-    nextEl.style.backgroundImage = `url('${url}')`;
-    nextEl.classList.add('is-active');
-    prevEl.classList.remove('is-active');
-    state.bgActiveLayer = activeIsA ? 'b' : 'a';
-  };
-  img.src = url;
+  img.onload = () => crossfadeBackgroundTo(urls[i]);
+  img.onerror = () => tryNextThumbnailUrl(urls, i + 1);
+  img.src = urls[i];
+}
+
+// 指定した画像URLへ、背景レイヤーをクロスフェードで切り替える共通処理
+function crossfadeBackgroundTo(url){
+  const activeIsA = state.bgActiveLayer !== 'b';
+  const nextEl = document.getElementById(activeIsA ? 'bg-layer-b' : 'bg-layer-a');
+  const prevEl = document.getElementById(activeIsA ? 'bg-layer-a' : 'bg-layer-b');
+  nextEl.style.backgroundImage = `url('${url}')`;
+  nextEl.classList.add('is-active');
+  prevEl.classList.remove('is-active');
+  state.bgActiveLayer = activeIsA ? 'b' : 'a';
 }
 
 function startBackgroundSlideshow(){
@@ -945,25 +955,7 @@ function playTrack(v, indexHint){
   state.currentIndex = (typeof indexHint === 'number') ? indexHint : state.currentList.findIndex(x => x.id === v.id);
   state.nowPlaying = v;
   if(!el.miniPlayer.classList.contains('hidden')) showMiniPlayer();
-  if(el.lyricsRippleThumb){
-    el.lyricsRippleThumb.classList.remove('is-loaded');
-    const thumb = el.lyricsRippleThumb;
-    thumb.onload = () => thumb.classList.add('is-loaded');
-    if(v.id){
-      // まず最高画質(maxresdefault)を試し、無ければ段階的により確実なものへフォールバックする
-      thumb.onerror = () => {
-        thumb.onerror = () => {
-          thumb.onerror = null;
-          if(v.thumb) thumb.src = v.thumb;
-        };
-        thumb.src = `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
-      };
-      thumb.src = `https://i.ytimg.com/vi/${v.id}/maxresdefault.jpg`;
-    } else if(v.thumb){
-      thumb.onerror = null;
-      thumb.src = v.thumb;
-    }
-  }
+  setBackgroundToTrackThumbnail(v);
   state.recentlyPlayedIds = [v.id, ...state.recentlyPlayedIds.filter(id => id !== v.id)].slice(0, 8);
   el.seekSlider.value = 0;
   el.timeCurrent.textContent = '0:00';
@@ -1284,7 +1276,6 @@ async function loadKaraokeLyrics(v){
   document.getElementById('full-lyrics-view').innerHTML = '';
   el.karaokeStatus.textContent = '歌詞を検索中…';
   if(el.lyricCandidates) el.lyricCandidates.innerHTML = '';
-  if(el.lyricsRipple) el.lyricsRipple.classList.remove('is-hidden');
 
   state.pitchStats = { shakuri: 0, kobushi: 0, fall: 0, vibrato: 0 };
   state.currentSegment = -1;
@@ -1317,36 +1308,15 @@ function applyLyrics(lines){
     el.karaokeStatus.textContent = '歌詞データを解析できませんでした。';
     el.karaokeLines.innerHTML = '';
     document.getElementById('full-lyrics-view').innerHTML = '';
-    if(el.lyricsRipple) el.lyricsRipple.classList.remove('is-hidden');
     if(el.pitchBarWrap) el.pitchBarWrap.classList.add('hidden');
     return;
   }
   el.karaokeStatus.textContent = '';
-  if(el.lyricsRipple) el.lyricsRipple.classList.add('is-hidden');
   if(el.pitchBarWrap) el.pitchBarWrap.classList.remove('hidden');
   renderKaraokeWindow(-1);
   if(state.player && state.player.getPlayerState && state.player.getPlayerState() === YT.PlayerState.PLAYING){
     startKaraokeSyncLoop();
   }
-}
-
-// 候補にも無かった場合、曲タイトルを手入力して歌詞を再検索する
-if(el.manualLyricSearchForm){
-  el.manualLyricSearchForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const query = el.manualLyricSearchInput.value.trim();
-    if(!query) return;
-    el.karaokeStatus.textContent = `「${query}」で歌詞を検索中…`;
-    const lrc = await fetchLyricsFromLrclibFreeText(query);
-    if(lrc){
-      if(el.lyricCandidates) el.lyricCandidates.innerHTML = '';
-      el.manualLyricSearchInput.value = '';
-      applyLyrics(parseLrc(lrc));
-      el.karaokeStatus.textContent = `「${query}」で見つかった歌詞を適用しました。`;
-    } else {
-      el.karaokeStatus.textContent = `「${query}」では歌詞が見つかりませんでした。別のタイトルで試すか、「✎ 歌詞を編集」から手動で貼り付けてください。`;
-    }
-  });
 }
 
 function startKaraokeSyncLoop(){
