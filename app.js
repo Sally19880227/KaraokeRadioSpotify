@@ -979,6 +979,11 @@ function startKaraoke(v){
     state.currentList.push(v);
     idx = state.currentList.length - 1;
   }
+  // アーティスト固定がONの場合、選び直した曲のアーティストで更新する
+  if(state.lockArtist){
+    const { artist } = guessTrackInfo(v);
+    if(artist) state.lockedArtistName = artist;
+  }
   showKaraokeView();
   playTrack(v, idx);
 }
