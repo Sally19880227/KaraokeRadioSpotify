@@ -15,6 +15,7 @@ const state = {
   currentList: [],
   currentIndex: -1,
   lockArtist: false,
+  lockedArtistName: null,
   nowPlaying: null,
   recentlyPlayedIds: [],
 
@@ -944,6 +945,13 @@ el.skipBtn.addEventListener('click', () => playNextByArtist());
 
 el.lockArtistBtn.addEventListener('click', () => {
   state.lockArtist = !state.lockArtist;
+  if(state.lockArtist){
+    const current = state.currentList[state.currentIndex];
+    const { artist } = guessTrackInfo(current || {});
+    state.lockedArtistName = artist || null;
+  } else {
+    state.lockedArtistName = null;
+  }
   el.lockArtistBtn.classList.toggle('is-active', state.lockArtist);
 });
 
@@ -1010,7 +1018,7 @@ function playTrack(v, indexHint){
 // ---------- 自動選曲（同じアーティストで検索） ----------
 // 次に検索するキーワードを決める：現在の曲のアーティスト名か、過去の検索履歴からランダムに1つ（半々の確率）
 function pickNextSearchQuery(currentArtist){
-  if(state.lockArtist) return { query: currentArtist, fromHistory: false };
+  if(state.lockArtist) return { query: state.lockedArtistName || currentArtist, fromHistory: false };
   const history = getSearchHistory();
   if(history.length){
     const query = history[Math.floor(Math.random() * history.length)];
