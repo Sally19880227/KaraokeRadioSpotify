@@ -222,6 +222,9 @@ function renderApiKeyList(){
 function openSettings(){
   el.apiKeyInput.value = '';
   renderApiKeyList();
+  // Tesla連携手順のURL欄に現在のページURLを表示する
+  const urlBox = document.getElementById('tesla-guide-url-box');
+  if(urlBox) urlBox.textContent = location.href.replace(/[?#].*$/, '');
   el.settingsModal.classList.remove('hidden');
 }
 function closeSettings(){ el.settingsModal.classList.add('hidden'); }
