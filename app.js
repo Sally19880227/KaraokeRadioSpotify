@@ -16,6 +16,8 @@ const state = {
   currentIndex: -1,
   lockArtist: false,
   lockedArtistName: null,
+  lyricsPool: [],      // 現在の曲で見つかった全歌詞候補
+  lyricsPoolIndex: 0,  // 現在使っている歌詞候補のインデックス
   nowPlaying: null,
   recentlyPlayedIds: [],
 
@@ -98,6 +100,7 @@ const el = {
   timeTotal: document.getElementById('time-total'),
   syncHint: document.getElementById('sync-hint'),
   lockArtistBtn: document.getElementById('lock-artist-btn'),
+  retryLyricsBtn: document.getElementById('retry-lyrics-btn'),
   lyricsEditModal: document.getElementById('lyrics-edit-modal'),
   lyricsEditClose: document.getElementById('lyrics-edit-close'),
   manualLrcInput: document.getElementById('manual-lrc-input'),
@@ -955,6 +958,15 @@ el.lockArtistBtn.addEventListener('click', () => {
   el.lockArtistBtn.classList.toggle('is-active', state.lockArtist);
 });
 
+el.retryLyricsBtn.addEventListener('click', () => {
+  if(!state.lyricsPool.length) return;
+  state.lyricsPoolIndex = (state.lyricsPoolIndex + 1) % state.lyricsPool.length;
+  const lrc = state.lyricsPool[state.lyricsPoolIndex];
+  stopKaraokeSyncLoop();
+  applyLyrics(parseLrc(lrc));
+  el.karaokeStatus.textContent = `別の歌詞を適用しました（${state.lyricsPoolIndex + 1}/${state.lyricsPool.length}件目）`;
+});
+
 // ---------- Media Session API（Tesla等のステアリングホイールのメディアボタンからの操作に対応） ----------
 if('mediaSession' in navigator){
   navigator.mediaSession.setActionHandler('play', () => {
@@ -1126,6 +1138,21 @@ async function fetchLyricsFromLrclib(track, artist){
   }
 }
 
+// 同タイトルの別歌詞を試すために、syncedLyricsを持つ全件を返すバージョン
+async function fetchAllLyricsFromLrclib(track, artist){
+  const url = new URL('https://lrclib.net/api/search');
+  url.searchParams.set('track_name', track);
+  url.searchParams.set('artist_name', artist);
+  try{
+    const res = await fetch(url);
+    if(!res.ok) return [];
+    const data = await res.json();
+    return data.filter(item => item.syncedLyrics).map(item => item.syncedLyrics);
+  } catch(e){
+    return [];
+  }
+}
+
 // LRCLIBの自由入力検索（q）で、曲名だけの緩い条件で探す最終手段
 async function fetchLyricsFromLrclibFreeText(query){
   const url = new URL('https://lrclib.net/api/search');
@@ -1146,16 +1173,20 @@ async function findLyricsWithFallback(v){
   const { artist, track, trackVariants } = guessTrackInfo(v);
   const triedTracks = trackVariants && trackVariants.length ? trackVariants : [track];
 
-  // ① 曲名の各バージョン（そのまま → 括弧除去 → Live/Cover等の語も除去）× アーティスト名で順に試す
+  state.lyricsPool = [];
+  state.lyricsPoolIndex = 0;
+
+  // ① 曲名の各バージョン × アーティスト名で全件収集
   for(const t of triedTracks){
-    const lrc = await fetchLyricsFromLrclib(t, artist);
-    if(lrc) return { lrc, usedTrack: t, usedArtist: artist };
+    const pool = await fetchAllLyricsFromLrclib(t, artist);
+    pool.forEach(lrc => { if(!state.lyricsPool.includes(lrc)) state.lyricsPool.push(lrc); });
+    if(state.lyricsPool.length) return { lrc: state.lyricsPool[0], usedTrack: t, usedArtist: artist };
   }
 
   // ② 一番シンプルにした曲名で、アーティスト名の自由入力検索を試す
   const simplestTrack = triedTracks[triedTracks.length - 1];
   const freeLrc = await fetchLyricsFromLrclibFreeText(`${artist} ${simplestTrack}`);
-  if(freeLrc) return { lrc: freeLrc, usedTrack: simplestTrack, usedArtist: artist };
+  if(freeLrc){ state.lyricsPool = [freeLrc]; return { lrc: freeLrc, usedTrack: simplestTrack, usedArtist: artist }; }
 
   return { lrc: null, usedTrack: simplestTrack, usedArtist: artist };
 }
