@@ -18,6 +18,8 @@ const state = {
   lockedArtistName: null,
   lyricsPool: [],      // 現在の曲で見つかった全歌詞候補
   lyricsPoolIndex: 0,  // 現在使っている歌詞候補のインデックス
+  lyricsSearchTrack: null,  // 「別の歌詞」ボタンで検索に使うtrack名
+  lyricsSearchArtist: null, // 「別の歌詞」ボタンで検索に使うartist名
   nowPlaying: null,
   recentlyPlayedIds: [],
 
@@ -964,13 +966,14 @@ el.retryLyricsBtn.addEventListener('click', async () => {
 
   el.retryLyricsBtn.disabled = true;
   el.karaokeStatus.textContent = '同じタイトルの歌詞を検索中…';
-  const { track } = guessTrackInfo(v);
 
-  // タイトルで広く検索
-  const url = new URL('https://lrclib.net/api/search');
-  url.searchParams.set('q', track);
+  // 候補チップで適用したキーワードがあればそれを優先、なければ自動解析したtrack名を使う
+  const { track: guessedTrack } = guessTrackInfo(v);
+  const searchTrack = state.lyricsSearchTrack || guessedTrack;
   let items = [];
   try{
+    const url = new URL('https://lrclib.net/api/search');
+    url.searchParams.set('q', searchTrack);
     const res = await fetch(url);
     if(res.ok) items = (await res.json()).filter(d => d.syncedLyrics);
   } catch(e){}
@@ -984,7 +987,7 @@ el.retryLyricsBtn.addEventListener('click', async () => {
 
   // 重複を除いてlyricsPoolに追加
   items.forEach(d => {
-    const item = { lrc: d.syncedLyrics, title: d.trackName || track, artist: d.artistName || '' };
+    const item = { lrc: d.syncedLyrics, title: d.trackName || searchTrack, artist: d.artistName || '' };
     if(!state.lyricsPool.some(p => p.lrc === item.lrc)) state.lyricsPool.push(item);
   });
 
@@ -1376,6 +1379,12 @@ async function tryLyricCandidate(candidate, chipEl){
   }
 
   if(lrc){
+    // 「別の歌詞」ボタンで使うキーワードを、このチップのtrack/artistで上書きする
+    state.lyricsSearchTrack = candidate.track;
+    state.lyricsSearchArtist = candidate.artist || null;
+    state.lyricsPool = [{ lrc, title: candidate.track, artist: candidate.artist || '' }];
+    state.lyricsPoolIndex = 0;
+
     el.lyricCandidates.innerHTML = '';
     applyLyrics(parseLrc(lrc));
     el.karaokeStatus.textContent = `「${candidate.label}」の歌詞を適用しました。`;
@@ -1413,6 +1422,8 @@ async function loadKaraokeLyrics(v){
   document.getElementById('full-lyrics-view').innerHTML = '';
   el.karaokeStatus.textContent = '歌詞を検索中…';
   if(el.lyricCandidates) el.lyricCandidates.innerHTML = '';
+  state.lyricsSearchTrack = null;
+  state.lyricsSearchArtist = null;
 
   state.pitchStats = { shakuri: 0, kobushi: 0, fall: 0, vibrato: 0 };
   state.currentSegment = -1;
