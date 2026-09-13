@@ -601,6 +601,11 @@ button{ font-family:inherit; cursor:pointer; }
 .control-btn-secondary img{ width:24px; height:24px; }
 .control-btn-secondary img{ width:15px; height:15px; }
 .now-playing-note{ font-size:11px; color: var(--text-dim); display:none; }
+.lock-artist-btn{
+  background: var(--surface); border:1px solid var(--line); color: var(--text-dim);
+  font-size:13px; font-weight:600; padding:8px 16px; border-radius:999px; flex-shrink:0;
+}
+.lock-artist-btn.is-active{ background: var(--gold); border-color: var(--gold); color:#0c0c10; }
 
 /* ---------- Modal ---------- */
 .modal{

@@ -14,6 +14,7 @@ const state = {
   nextPageToken: null,
   currentList: [],
   currentIndex: -1,
+  lockArtist: false,
   nowPlaying: null,
   recentlyPlayedIds: [],
 
@@ -95,6 +96,7 @@ const el = {
   timeCurrent: document.getElementById('time-current'),
   timeTotal: document.getElementById('time-total'),
   syncHint: document.getElementById('sync-hint'),
+  lockArtistBtn: document.getElementById('lock-artist-btn'),
   lyricsEditModal: document.getElementById('lyrics-edit-modal'),
   lyricsEditClose: document.getElementById('lyrics-edit-close'),
   manualLrcInput: document.getElementById('manual-lrc-input'),
@@ -940,6 +942,11 @@ el.playPauseBtn.addEventListener('click', () => {
 });
 el.skipBtn.addEventListener('click', () => playNextByArtist());
 
+el.lockArtistBtn.addEventListener('click', () => {
+  state.lockArtist = !state.lockArtist;
+  el.lockArtistBtn.classList.toggle('is-active', state.lockArtist);
+});
+
 // ---------- Media Session API（Tesla等のステアリングホイールのメディアボタンからの操作に対応） ----------
 if('mediaSession' in navigator){
   navigator.mediaSession.setActionHandler('play', () => {
@@ -1003,6 +1010,7 @@ function playTrack(v, indexHint){
 // ---------- 自動選曲（同じアーティストで検索） ----------
 // 次に検索するキーワードを決める：現在の曲のアーティスト名か、過去の検索履歴からランダムに1つ（半々の確率）
 function pickNextSearchQuery(currentArtist){
+  if(state.lockArtist) return { query: currentArtist, fromHistory: false };
   const history = getSearchHistory();
   if(history.length){
     const query = history[Math.floor(Math.random() * history.length)];
