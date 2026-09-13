@@ -958,13 +958,59 @@ el.lockArtistBtn.addEventListener('click', () => {
   el.lockArtistBtn.classList.toggle('is-active', state.lockArtist);
 });
 
-el.retryLyricsBtn.addEventListener('click', () => {
-  if(!state.lyricsPool.length) return;
-  state.lyricsPoolIndex = (state.lyricsPoolIndex + 1) % state.lyricsPool.length;
-  const lrc = state.lyricsPool[state.lyricsPoolIndex];
-  stopKaraokeSyncLoop();
-  applyLyrics(parseLrc(lrc));
-  el.karaokeStatus.textContent = `別の歌詞を適用しました（${state.lyricsPoolIndex + 1}/${state.lyricsPool.length}件目）`;
+el.retryLyricsBtn.addEventListener('click', async () => {
+  const v = state.currentVideoForLyrics || state.nowPlaying;
+  if(!v) return;
+
+  el.retryLyricsBtn.disabled = true;
+  el.karaokeStatus.textContent = '同じタイトルの歌詞を検索中…';
+  const { track } = guessTrackInfo(v);
+
+  // タイトルで広く検索
+  const url = new URL('https://lrclib.net/api/search');
+  url.searchParams.set('q', track);
+  let items = [];
+  try{
+    const res = await fetch(url);
+    if(res.ok) items = (await res.json()).filter(d => d.syncedLyrics);
+  } catch(e){}
+
+  el.retryLyricsBtn.disabled = false;
+
+  if(!items.length){
+    el.karaokeStatus.textContent = '別の歌詞候補が見つかりませんでした。';
+    return;
+  }
+
+  // 重複を除いてlyricsPoolに追加
+  items.forEach(d => {
+    const item = { lrc: d.syncedLyrics, title: d.trackName || track, artist: d.artistName || '' };
+    if(!state.lyricsPool.some(p => p.lrc === item.lrc)) state.lyricsPool.push(item);
+  });
+
+  // 候補を一覧表示
+  if(!el.lyricCandidates) return;
+  el.lyricCandidates.innerHTML = '';
+  el.karaokeStatus.textContent = '適用したい歌詞を選んでください:';
+
+  const row = document.createElement('div');
+  row.className = 'lyric-candidates-chips';
+  state.lyricsPool.forEach((item, idx) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'lyric-candidate-chip';
+    if(idx === state.lyricsPoolIndex) chip.classList.add('is-selected');
+    chip.textContent = item.artist ? `${item.title} / ${item.artist}` : item.title;
+    chip.addEventListener('click', () => {
+      state.lyricsPoolIndex = idx;
+      stopKaraokeSyncLoop();
+      el.lyricCandidates.innerHTML = '';
+      el.karaokeStatus.textContent = `「${chip.textContent}」の歌詞を適用しました。`;
+      applyLyrics(parseLrc(item.lrc));
+    });
+    row.appendChild(chip);
+  });
+  el.lyricCandidates.appendChild(row);
 });
 
 // ---------- Media Session API（Tesla等のステアリングホイールのメディアボタンからの操作に対応） ----------
@@ -1138,7 +1184,7 @@ async function fetchLyricsFromLrclib(track, artist){
   }
 }
 
-// 同タイトルの別歌詞を試すために、syncedLyricsを持つ全件を返すバージョン
+// 同タイトルの別歌詞を試すために、syncedLyricsを持つ全件をオブジェクトで返すバージョン
 async function fetchAllLyricsFromLrclib(track, artist){
   const url = new URL('https://lrclib.net/api/search');
   url.searchParams.set('track_name', track);
@@ -1147,7 +1193,13 @@ async function fetchAllLyricsFromLrclib(track, artist){
     const res = await fetch(url);
     if(!res.ok) return [];
     const data = await res.json();
-    return data.filter(item => item.syncedLyrics).map(item => item.syncedLyrics);
+    return data
+      .filter(item => item.syncedLyrics)
+      .map(item => ({
+        lrc: item.syncedLyrics,
+        title: item.trackName || track,
+        artist: item.artistName || artist,
+      }));
   } catch(e){
     return [];
   }
@@ -1179,18 +1231,19 @@ async function findLyricsWithFallback(v){
   // ① 曲名の各バージョン × アーティスト名で全件収集（早期returnせず全部集める）
   for(const t of triedTracks){
     const pool = await fetchAllLyricsFromLrclib(t, artist);
-    pool.forEach(lrc => { if(!state.lyricsPool.includes(lrc)) state.lyricsPool.push(lrc); });
+    pool.forEach(item => {
+      if(!state.lyricsPool.some(p => p.lrc === item.lrc)) state.lyricsPool.push(item);
+    });
   }
   if(state.lyricsPool.length){
-    const usedTrack = triedTracks[0];
-    return { lrc: state.lyricsPool[0], usedTrack, usedArtist: artist };
+    return { lrc: state.lyricsPool[0].lrc, usedTrack: state.lyricsPool[0].title, usedArtist: state.lyricsPool[0].artist };
   }
 
   // ② 一番シンプルにした曲名で、アーティスト名の自由入力検索を試す
   const simplestTrack = triedTracks[triedTracks.length - 1];
   const freeLrc = await fetchLyricsFromLrclibFreeText(`${artist} ${simplestTrack}`);
   if(freeLrc){
-    state.lyricsPool = [freeLrc];
+    state.lyricsPool = [{ lrc: freeLrc, title: simplestTrack, artist }];
     return { lrc: freeLrc, usedTrack: simplestTrack, usedArtist: artist };
   }
 

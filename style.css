@@ -293,6 +293,7 @@ button{ font-family:inherit; cursor:pointer; }
   max-width: 280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .lyric-candidate-chip:hover{ border-color: var(--accent); color: var(--accent); }
+.lyric-candidate-chip.is-selected{ border-color: var(--gold); color: var(--gold); }
 .lyric-candidate-chip:disabled{ opacity:.6; cursor:default; }
 .karaoke-tap-hint{ font-size:12px; color: var(--text-dim); margin-top:22px; opacity:.75; }
 
