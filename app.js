@@ -1176,17 +1176,23 @@ async function findLyricsWithFallback(v){
   state.lyricsPool = [];
   state.lyricsPoolIndex = 0;
 
-  // ① 曲名の各バージョン × アーティスト名で全件収集
+  // ① 曲名の各バージョン × アーティスト名で全件収集（早期returnせず全部集める）
   for(const t of triedTracks){
     const pool = await fetchAllLyricsFromLrclib(t, artist);
     pool.forEach(lrc => { if(!state.lyricsPool.includes(lrc)) state.lyricsPool.push(lrc); });
-    if(state.lyricsPool.length) return { lrc: state.lyricsPool[0], usedTrack: t, usedArtist: artist };
+  }
+  if(state.lyricsPool.length){
+    const usedTrack = triedTracks[0];
+    return { lrc: state.lyricsPool[0], usedTrack, usedArtist: artist };
   }
 
   // ② 一番シンプルにした曲名で、アーティスト名の自由入力検索を試す
   const simplestTrack = triedTracks[triedTracks.length - 1];
   const freeLrc = await fetchLyricsFromLrclibFreeText(`${artist} ${simplestTrack}`);
-  if(freeLrc){ state.lyricsPool = [freeLrc]; return { lrc: freeLrc, usedTrack: simplestTrack, usedArtist: artist }; }
+  if(freeLrc){
+    state.lyricsPool = [freeLrc];
+    return { lrc: freeLrc, usedTrack: simplestTrack, usedArtist: artist };
+  }
 
   return { lrc: null, usedTrack: simplestTrack, usedArtist: artist };
 }
