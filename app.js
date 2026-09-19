@@ -509,7 +509,16 @@ if(SpeechRecognitionCtor && el.voiceSearchBtn){
   recognition.addEventListener('error', (e) => {
     isListening = false;
     el.voiceSearchBtn.classList.remove('is-listening');
-    if(e.error !== 'no-speech' && e.error !== 'aborted'){
+    console.error('SpeechRecognition error:', e.error);
+    const messages = {
+      'not-allowed': 'マイクの利用が許可されていません。ブラウザのアドレスバーのマイクアイコンから許可し、Windowsのマイクプライバシー設定も確認してください。',
+      'service-not-allowed': 'マイクの利用が許可されていません。ブラウザのアドレスバーのマイクアイコンから許可し、Windowsのマイクプライバシー設定も確認してください。',
+      'audio-capture': 'マイクが見つかりません。マイクが接続されているか、他のアプリで使用中でないか確認してください。',
+      'network': '音声認識サーバーに接続できませんでした。通信環境を確認してください。'
+    };
+    if(messages[e.error]){
+      showStatus(messages[e.error]);
+    }else if(e.error !== 'no-speech' && e.error !== 'aborted'){
       showStatus('音声入力を利用できませんでした。マイクの利用を許可してください。');
     }
   });
