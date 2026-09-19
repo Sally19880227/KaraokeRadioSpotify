@@ -69,6 +69,20 @@ button{ font-family:inherit; cursor:pointer; }
   display:flex; align-items:center; justify-content:center;
 }
 
+.voice-search-btn{
+  border:none; border-left:1px solid var(--line); background:transparent; color: var(--text-dim);
+  padding:0 14px; font-size:15px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.voice-search-btn:hover{ color: var(--accent); }
+.voice-search-btn.is-listening{
+  color:#ff5e6c; animation: voiceListeningPulse 1s ease-in-out infinite;
+}
+@keyframes voiceListeningPulse{
+  0%, 100%{ transform: scale(1); opacity:1; }
+  50%{ transform: scale(1.18); opacity:.7; }
+}
+
 /* ---------- 検索履歴 ---------- */
 .search-history{
   display:block;
