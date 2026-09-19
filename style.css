@@ -595,12 +595,15 @@ button{ font-family:inherit; cursor:pointer; }
   flex-shrink:0;
 }
 .control-bar-bottom{
+  display:flex; flex-direction:column; gap:8px;
   position:sticky; bottom:0; z-index:20;
-  padding:14px 20px; border-top:1px solid var(--line);
+  padding:10px 20px 14px; border-top:1px solid var(--line);
   background: rgba(10,10,14,0.92); backdrop-filter: blur(6px);
+}
+.control-bar-buttons-row{
+  justify-content:center;
   flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
 }
-.control-bar-extras{ display:flex; gap:8px; flex-shrink:0; }
 .seek-wrap{
   display:flex; align-items:center; gap:8px;
   flex:1 1 220px; min-width:160px;
