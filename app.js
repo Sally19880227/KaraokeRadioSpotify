@@ -46,6 +46,7 @@ const state = {
 const el = {
   searchForm: document.getElementById('search-form'),
   searchInput: document.getElementById('search-input'),
+  voiceSearchBtn: document.getElementById('voice-search-btn'),
   settingsBtn: document.getElementById('settings-btn'),
   brandHomeBtn: document.getElementById('brand-home-btn'),
   settingsModal: document.getElementById('settings-modal'),
