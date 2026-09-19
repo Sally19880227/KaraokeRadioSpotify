@@ -1081,6 +1081,16 @@ if('mediaSession' in navigator){
     if(state.player && state.player.seekTo) state.player.seekTo(0, true);
   });
 }
+// 車載ブラウザによってはMedia Session APIではなく通常のキーイベントとして
+// ステアリングのメディアボタンを送ってくる場合があるため、フォールバックとして併用する
+document.addEventListener('keydown', (e) => {
+  if(state.currentIndex < 0) return; // 再生中の曲がない場合は無視
+  if(e.code === 'MediaTrackNext'){
+    playNextByArtist();
+  } else if(e.code === 'MediaTrackPrevious'){
+    if(state.player && state.player.seekTo) state.player.seekTo(0, true);
+  }
+});
 
 // ---------- 曲を選んで再生開始 ----------
 function startKaraoke(v){
