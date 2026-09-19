@@ -601,8 +601,12 @@ button{ font-family:inherit; cursor:pointer; }
   background: rgba(10,10,14,0.92); backdrop-filter: blur(6px);
 }
 .control-bar-buttons-row{
-  justify-content:center;
+  justify-content:flex-start;
   flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.control-bar-transport{
+  display:flex; align-items:center; gap:10px; flex-shrink:0;
+  margin-left:auto;
 }
 .seek-wrap{
   display:flex; align-items:center; gap:8px;
