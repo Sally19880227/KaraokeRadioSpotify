@@ -14,7 +14,7 @@ const state = {
   nextPageToken: null,
   currentList: [],
   currentIndex: -1,
-  lockArtist: false,
+  lockArtist: true,
   lockedArtistName: null,
   lyricsPool: [],      // 現在の曲で見つかった全歌詞候補
   lyricsPoolIndex: 0,  // 現在使っている歌詞候補のインデックス
