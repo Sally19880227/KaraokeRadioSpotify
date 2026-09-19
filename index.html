@@ -149,28 +149,8 @@
   <div class="modal-card">
     <button id="settings-close-x" class="modal-close-x" aria-label="設定を閉じる">✕</button>
     <h2>設定</h2>
-    <p class="modal-desc">
-      YouTube Data API v3 のAPIキーを登録してください。複数登録しておくと、
-      1つのキーが1日の利用上限に達した場合に自動的に次のキーへ切り替わります。
-      キーはこの端末のブラウザにのみ保存され、外部には送信されません。
-    </p>
-    <div id="api-key-list" class="api-key-list"></div>
-    <a href="https://console.cloud.google.com/flows/enableapi?apiid=youtube.googleapis.com" target="_blank" rel="noopener" class="quick-get-key-link">
-      🚀 新しいAPIキーをすぐに取得する（Google Cloudのウィザードを開く）
-    </a>
-    <a href="./api_key_guide.pdf" target="_blank" rel="noopener" class="quick-get-key-link pdf-link">
-      📄 取得〜設定の手順ガイド（PDF）を見る
-    </a>
-    <div class="api-key-add-row">
-      <input id="api-key-input" type="text" placeholder="新しいAPIキーを追加">
-      <button id="api-key-add-btn" class="primary-btn">追加</button>
-    </div>
-    <div class="modal-actions">
-      <button id="api-key-cancel" class="ghost-btn">閉じる</button>
-    </div>
 
-    <hr class="modal-divider">
-    <h3 class="modal-subheading">🚗 Teslaで使う手順</h3>
+    <h3 class="modal-subheading">🚀 かんたん設定（推奨）：スマホで発行してTeslaへ引き継ぐ</h3>
     <div class="tesla-guide">
       <div class="tesla-guide-step">
         <div class="tesla-guide-num">1</div>
@@ -201,6 +181,29 @@
           <div class="tesla-guide-desc">Tesla内のブラウザで設定⚙を開き、「端末間の同期」に手順2と同じユーザー名・パスワードを入力して「☁️ サーバーから読み込む」をタップします。これでAPIキーが引き継がれます。</div>
         </div>
       </div>
+    </div>
+
+    <hr class="modal-divider">
+    <h3 class="modal-subheading">個別にAPIキーを管理する</h3>
+    <p class="modal-desc">
+      YouTube Data API v3 のAPIキーを登録してください。複数登録しておくと、
+      1つのキーが1日の利用上限に達した場合に自動的に次のキーへ切り替わります。
+      キーはこの端末のブラウザにのみ保存され、外部には送信されません。
+    </p>
+    <div id="api-key-list" class="api-key-list"></div>
+    <a href="https://console.cloud.google.com/flows/enableapi?apiid=youtube.googleapis.com" target="_blank" rel="noopener" class="quick-get-key-link">
+      🚀 新しいAPIキーをすぐに取得する（Google Cloudのウィザードを開く）
+    </a>
+    <a href="./api_key_guide.pdf" target="_blank" rel="noopener" class="quick-get-key-link pdf-link">
+      📄 取得〜設定の手順ガイド（PDF）を見る
+    </a>
+    <div class="api-key-add-row">
+      <input id="api-key-input" type="text" placeholder="新しいAPIキーを追加">
+      <button id="api-key-add-btn" class="primary-btn">追加</button>
+    </div>
+    <p id="api-key-add-status" class="api-key-add-status"></p>
+    <div class="modal-actions">
+      <button id="api-key-cancel" class="ghost-btn">閉じる</button>
     </div>
 
     <hr class="modal-divider">
