@@ -2108,7 +2108,7 @@ function applyBgBrightness(value){
 }
 function loadBgBrightness(){
   const stored = parseFloat(localStorage.getItem(BG_BRIGHTNESS_KEY));
-  return isFinite(stored) ? stored : 0.75;
+  return isFinite(stored) ? stored : 0.8;
 }
 applyBgBrightness(loadBgBrightness());
 applyLyricsMode(loadLyricsMode());
