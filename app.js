@@ -1101,11 +1101,9 @@ if('mediaSession' in navigator){
 // ステアリングのメディアボタンを送ってくる場合があるため、フォールバックとして併用する
 document.addEventListener('keydown', (e) => {
   if(state.currentIndex < 0) return; // 再生中の曲がない場合は無視
-  // steeringDebug: ステアリングボタンが実際にどのkey/codeを送ってくるか特定するための一時的な調査用ログ。
+  // ステアリングボタンが実際にどのkey/codeを送ってくるか特定するための一時的な調査用ログ。
   // 原因判明後は削除する。
-  if(window.steeringDebug){
-    alert('keydown: key=' + e.key + ' / code=' + e.code);
-  }
+  alert('keydown: key=' + e.key + ' / code=' + e.code);
   if(e.code === 'MediaTrackNext' || e.key === 'MediaTrackNext'){
     playNextByArtist();
   } else if(e.code === 'MediaTrackPrevious' || e.key === 'MediaTrackPrevious'){
