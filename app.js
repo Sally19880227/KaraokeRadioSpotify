@@ -1090,10 +1090,12 @@ if('mediaSession' in navigator){
     if(state.player && state.player.pauseVideo) state.player.pauseVideo();
   });
   navigator.mediaSession.setActionHandler('nexttrack', () => {
+    alert('mediaSession: nexttrack が呼ばれました'); // 調査用。原因判明後に削除する
     playNextByArtist();
   });
   // 「前へ」は明確な巻き戻し対象がないため、現在の曲の先頭に戻す動作にしている
   navigator.mediaSession.setActionHandler('previoustrack', () => {
+    alert('mediaSession: previoustrack が呼ばれました'); // 調査用。原因判明後に削除する
     if(state.player && state.player.seekTo) state.player.seekTo(0, true);
   });
 }
