@@ -485,6 +485,51 @@ el.searchForm.addEventListener('submit', (e) => {
   loadSearchResults(true);
 });
 
+// ---------- 音声入力検索（Tesla車内でのハンズフリー操作を想定） ----------
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+if(SpeechRecognitionCtor && el.voiceSearchBtn){
+  el.voiceSearchBtn.classList.remove('hidden');
+  const recognition = new SpeechRecognitionCtor();
+  recognition.lang = 'ja-JP';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  let isListening = false;
+
+  recognition.addEventListener('result', (e) => {
+    const transcript = e.results[0][0].transcript.trim();
+    if(transcript){
+      el.searchInput.value = transcript;
+      el.searchForm.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+  });
+  recognition.addEventListener('end', () => {
+    isListening = false;
+    el.voiceSearchBtn.classList.remove('is-listening');
+  });
+  recognition.addEventListener('error', (e) => {
+    isListening = false;
+    el.voiceSearchBtn.classList.remove('is-listening');
+    if(e.error !== 'no-speech' && e.error !== 'aborted'){
+      showStatus('音声入力を利用できませんでした。マイクの利用を許可してください。');
+    }
+  });
+
+  el.voiceSearchBtn.addEventListener('click', () => {
+    if(isListening){
+      recognition.stop();
+      return;
+    }
+    isListening = true;
+    el.voiceSearchBtn.classList.add('is-listening');
+    try{
+      recognition.start();
+    }catch(err){
+      isListening = false;
+      el.voiceSearchBtn.classList.remove('is-listening');
+    }
+  });
+}
+
 // 選んだチップを視覚的にハイライトする（見た目上「選択中」と分かるようにする）
 function markChipSelected(clickedEl){
   document.querySelectorAll('.suggest-chip.is-selected').forEach(c => c.classList.remove('is-selected'));
