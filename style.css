@@ -606,7 +606,7 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .seek-wrap{
   display:flex; align-items:center; gap:8px;
-  flex:1 1 220px; min-width:160px;
+  width:100%;
 }
 .seek-wrap span{ font-size:11px; color: var(--text-dim); flex-shrink:0; width:34px; }
 #time-total{ text-align:right; }
