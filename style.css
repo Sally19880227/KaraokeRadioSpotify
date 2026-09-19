@@ -689,6 +689,8 @@ button{ font-family:inherit; cursor:pointer; }
 .quick-get-key-link.pdf-link:hover{ border-color: var(--accent); color: var(--accent); }
 .api-key-add-row{ display:flex; gap:8px; margin-bottom:16px; }
 .api-key-add-row .primary-btn{ flex-shrink:0; }
+.api-key-add-status{ font-size:12.5px; color: var(--text-dim); margin:-8px 0 16px; min-height:1em; }
+.api-key-add-status.is-error{ color:#ff7a7a; }
 #manual-lrc-input{
   width:100%; background: var(--bg); border:1px solid var(--line); color:var(--text);
   padding:10px 12px; border-radius:8px; font-size:12.5px; font-family: monospace;
