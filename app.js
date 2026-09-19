@@ -239,15 +239,67 @@ el.settingsModal.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape' && !el.settingsModal.classList.contains('hidden')) closeSettings();
 });
-el.apiKeyAddBtn.addEventListener('click', () => {
+// 追加ボタンを押した時点でキーが実際に使えるかその場で検証し、原因を具体的に案内する。
+// i18nLanguagesは消費クォータが1ユニットと軽く、動作確認に向いている。
+async function validateApiKey(key){
+  let res;
+  try{
+    res = await fetch(`https://www.googleapis.com/youtube/v3/i18nLanguages?part=snippet&key=${encodeURIComponent(key)}`);
+  }catch(e){
+    return { ok:false, blocking:false, message:'通信状況を確認できなかったため検証をスキップしました。' };
+  }
+  if(res.ok) return { ok:true };
+  const data = await res.json().catch(() => ({}));
+  const reason = data.error && data.error.errors && data.error.errors[0] && data.error.errors[0].reason;
+  if(reason === 'accessNotConfigured'){
+    return { ok:false, blocking:true, message:'このプロジェクトで「YouTube Data API v3」が有効化されていません。Google Cloud Consoleで有効化してから追加してください。' };
+  }
+  if(reason === 'keyInvalid' || reason === 'badRequest'){
+    return { ok:false, blocking:true, message:'このAPIキーは無効です。コピーし忘れや余分な空白がないか確認してください。' };
+  }
+  if(reason === 'forbidden'){
+    return { ok:false, blocking:true, message:'このAPIキーにはアクセス制限（リファラー制限など）が設定されており、このアプリからは使用できません。制限を「なし」にするか、このサイトのURLを許可リストに追加してください。' };
+  }
+  if(reason === 'dailyLimitExceeded' || reason === 'quotaExceeded' || reason === 'rateLimitExceeded'){
+    return { ok:false, blocking:false, exhaustedToday:true, message:'このキーは本日の利用上限に達しています。キー自体は有効なので、明日以降または別のキーの追加時に使えるようになります。' };
+  }
+  return { ok:false, blocking:false, message:(data.error && data.error.message) || '確認中に不明なエラーが発生しました。' };
+}
+
+el.apiKeyAddBtn.addEventListener('click', async () => {
   const key = el.apiKeyInput.value.trim();
   if(!key) return;
-  if(!state.apiKeys.includes(key)){
-    state.apiKeys.push(key);
-    saveApiKeys();
+  if(state.apiKeys.includes(key)){
+    el.apiKeyInput.value = '';
+    el.apiKeyAddStatus.textContent = 'このキーはすでに登録されています。';
+    el.apiKeyAddStatus.classList.remove('is-error');
+    return;
   }
+  el.apiKeyAddBtn.disabled = true;
+  el.apiKeyAddStatus.textContent = '確認しています…';
+  el.apiKeyAddStatus.classList.remove('is-error');
+  const result = await validateApiKey(key);
+  el.apiKeyAddBtn.disabled = false;
+  if(result.blocking){
+    el.apiKeyAddStatus.textContent = '❌ ' + result.message;
+    el.apiKeyAddStatus.classList.add('is-error');
+    return;
+  }
+  state.apiKeys.push(key);
+  saveApiKeys();
   el.apiKeyInput.value = '';
   renderApiKeyList();
+  if(result.exhaustedToday){
+    markKeyExhausted(key);
+    el.apiKeyAddStatus.textContent = '⚠️ ' + result.message;
+    el.apiKeyAddStatus.classList.add('is-error');
+  }else if(result.ok){
+    el.apiKeyAddStatus.textContent = '✅ 有効なキーを追加しました。';
+    el.apiKeyAddStatus.classList.remove('is-error');
+  }else{
+    el.apiKeyAddStatus.textContent = '⚠️ ' + result.message + '（ひとまず追加しました）';
+    el.apiKeyAddStatus.classList.remove('is-error');
+  }
   if(el.historyThumbGrid && !el.historyThumbGrid.children.length){
     renderHistoryThumbnailGrid();
   }
