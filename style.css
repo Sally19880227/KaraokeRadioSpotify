@@ -731,7 +731,6 @@ button{ font-family:inherit; cursor:pointer; }
   .control-bar-bottom .btn-label{ display:none; }
   .control-bar-bottom .lock-artist-btn,
   .control-bar-bottom .lyrics-mode-btn{ padding:8px 10px; }
-  .seek-wrap{ flex-basis:100px; min-width:80px; }
 }
 
 /* ---------- 歌詞全体表示：画面幅に応じて段組み数を自動調整 ---------- */
