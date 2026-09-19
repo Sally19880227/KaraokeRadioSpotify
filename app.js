@@ -52,6 +52,7 @@ const el = {
   settingsModal: document.getElementById('settings-modal'),
   apiKeyInput: document.getElementById('api-key-input'),
   apiKeyAddBtn: document.getElementById('api-key-add-btn'),
+  apiKeyAddStatus: document.getElementById('api-key-add-status'),
   apiKeyCancel: document.getElementById('api-key-cancel'),
   settingsCloseX: document.getElementById('settings-close-x'),
   apiKeyList: document.getElementById('api-key-list'),
