@@ -509,12 +509,17 @@ if(SpeechRecognitionCtor && el.voiceSearchBtn){
   recognition.addEventListener('error', (e) => {
     isListening = false;
     el.voiceSearchBtn.classList.remove('is-listening');
-    alert('音声認識エラー: ' + e.error);
+    if(e.error === 'network'){
+      // 車載ブラウザ等でGoogleの音声認識バックエンドに到達できない環境向けの代替導線。
+      // 画面キーボード自体の音声入力ボタンは別経路で動くため、入力欄をフォーカスしてキーボードを開く。
+      showStatus('この端末では音声検索ボタンが利用できません。検索欄をタップし、キーボードのマイクボタンをご利用ください。');
+      el.searchInput.focus();
+      return;
+    }
     const messages = {
       'not-allowed': 'マイクの利用が許可されていません。この端末のブラウザがマイクアクセスをブロックしている可能性があります。',
       'service-not-allowed': 'マイクの利用が許可されていません。この端末のブラウザがマイクアクセスをブロックしている可能性があります。',
-      'audio-capture': 'マイクが見つかりません。マイクが接続されているか、他のアプリで使用中でないか確認してください。',
-      'network': '音声認識サーバーに接続できませんでした。通信環境を確認してください。'
+      'audio-capture': 'マイクが見つかりません。マイクが接続されているか、他のアプリで使用中でないか確認してください。'
     };
     if(messages[e.error]){
       showStatus(messages[e.error]);
