@@ -223,6 +223,8 @@ function renderApiKeyList(){
 
 function openSettings(){
   el.apiKeyInput.value = '';
+  el.apiKeyAddStatus.textContent = '';
+  el.apiKeyAddStatus.classList.remove('is-error');
   renderApiKeyList();
   // Tesla連携手順のURL欄に現在のページURLを表示する
   const urlBox = document.getElementById('tesla-guide-url-box');
